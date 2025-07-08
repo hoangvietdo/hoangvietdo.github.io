@@ -271,6 +271,12 @@ $(window).on('load', function () {
 
   // Init. author notes (tooltips).
   $('[data-toggle="tooltip"]').tooltip();
+
+  // Toggle day/night mode.
+    $('.js-dark-toggle').click(function(e) {
+      e.preventDefault();
+      toggleDarkMode();
+    });
 });
 
 // Theme chooser events.
@@ -291,6 +297,49 @@ if (linkLight && linkDark && linkAuto) {
     changeThemeModeClick(2);
   });
 }
+
+// Theme toggle button.
+function toggleDarkMode() {
+    if ($('body').hasClass('dark')) {
+      $('body').css({opacity: 0, visibility: 'visible'}).animate({opacity: 1}, 500);
+      $('body').removeClass('dark');
+      $('link[title=hl-light]')[0].disabled = false;
+      $('link[title=hl-dark]')[0].disabled = true;
+      $('.js-dark-toggle i').removeClass('fa-sun');
+      $('.js-dark-toggle i').addClass('fa-moon');
+      localStorage.setItem('dark_mode', '0');
+    } else {
+      $('body').css({opacity: 0, visibility: 'visible'}).animate({opacity: 1}, 500);
+      $('body').addClass('dark');
+      $('link[title=hl-light]')[0].disabled = true;
+      $('link[title=hl-dark]')[0].disabled = false;
+      $('.js-dark-toggle i').removeClass('fa-moon');
+      $('.js-dark-toggle i').addClass('fa-sun');
+      localStorage.setItem('dark_mode', '1');
+    }
+  }
+
+$(document).ready(function() {
+    // Set dark mode if user chose it.
+    let default_mode = 0;
+    if ($('body').hasClass('dark')) {
+      default_mode = 1;
+    }
+    let dark_mode = parseInt(localStorage.getItem('dark_mode') || default_mode);
+    if (dark_mode) {
+      $('body').addClass('dark');
+      $('link[title=hl-light]')[0].disabled = true;
+      $('link[title=hl-dark]')[0].disabled = false;
+      $('.js-dark-toggle i').removeClass('fa-moon');
+      $('.js-dark-toggle i').addClass('fa-sun');
+    } else {
+      $('body').removeClass('dark');
+      $('link[title=hl-light]')[0].disabled = false;
+      $('link[title=hl-dark]')[0].disabled = true;
+      $('.js-dark-toggle i').removeClass('fa-sun');
+      $('.js-dark-toggle i').addClass('fa-moon');
+    }
+  });
 
 // Media Query events.
 // Live update of day/night mode on system preferences update (no refresh required).

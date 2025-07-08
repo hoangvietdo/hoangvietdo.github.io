@@ -5,9 +5,10 @@
 
 # Appearance (customize the theme from data/themes)
 appearance:
-  theme_day: light
-  theme_night: persodark
-  font: custom_font
+  mode: system
+  theme_day: viet
+  theme_night: viet
+  font: minimal
   font_size: L
 
 # Site header
@@ -20,7 +21,8 @@ header:
     show_language: false
     show_day_night: true
     show_search: false
-    highlight_active_link: true
+    highlight_active_link: false
+    show_github: false
 
 # Site footer
 
@@ -29,9 +31,9 @@ footer:
     notice: '© {year} Hoang Viet Do. This work is licensed under {license}.'
     license:
       enable: true
-      allow_derivatives: true
+      allow_derivatives: false
       share_alike: true
-      allow_commercial: true
+      allow_commercial: false
 
 # Localization
 
@@ -53,11 +55,12 @@ features:
       - r
       - latex
   math:
-    enable: false
+    enable: true
   privacy_pack:
     enable: false
   repository:
-    url: 'https://github.com/hoangvietdo/hoangvietdo.github.io'
+    enable: false
+    url: ''
     content_dir: content
     branch: main
   avatar:

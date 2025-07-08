@@ -5,7 +5,7 @@ theme: "starter-hugo-academic"
 # This file is formatted using YAML syntax - learn more at https://learnxinyminutes.com/docs/yaml/
 
 title: Hoang Viet Do # Website name
-baseURL: 'https://hoangvietdo.github.io/' # Website URL
+baseURL: '' # Website URL
 
 ############################
 ## LANGUAGE

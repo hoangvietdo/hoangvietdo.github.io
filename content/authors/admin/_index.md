@@ -29,17 +29,19 @@ education:
     - course: B.S. in Control Engineering and Automation Technology
       institution: Hanoi University of Science and Technology (HUST), Hanoi, Vietnam
       year: "2018"
-      place: "asd"
+      thesis: "asd"
 
 social:
   - icon: envelope
     icon_pack: fas
     link: mailto:hoangvietdo.bk@gmail.com
+    display:
+      header: false
   - icon: github
     icon_pack: fab
     link: https://github.com/hoangvietdo
     display:
-      header: true
+      header: false
   - icon: graduation-cap
     icon_pack: fas
     link: https://scholar.google.com/citations?user=EoqJPLsAAAAJ&hl=en
@@ -50,8 +52,10 @@ social:
 highlight_name: true # Highlight the author in author lists? (true/false)
 ---
 
-### About me ##
+### Biography
 
-I am currently a Postdoctoral Researcher at iNCSL, Sejong University in Seoul, Republic of Korea, working under the supervision of Prof. Jin Woo Song.
+- I am currently a Postdoctoral Researcher at iNCSL, Sejong University in Seoul, Republic of Korea, working under the supervision of ***Prof. Jin Woo Song***.
+{style="font-size: 0.95rem; text-align: justify;"}
 
-My research focuses on artificial intelligence for robotics, with an emphasis on Kalman filtering, SLAM, state estimation, and sensor fusion using LiDAR, radar, cameras, IMUs, and GNSS.
+- My research focuses on artificial intelligence for robotics, with an emphasis on Kalman filtering, SLAM, state estimation, and sensor fusion using LiDAR, radar, cameras, IMUs, and GNSS.
+{style="font-size: 0.95rem; text-align: justify;"}
