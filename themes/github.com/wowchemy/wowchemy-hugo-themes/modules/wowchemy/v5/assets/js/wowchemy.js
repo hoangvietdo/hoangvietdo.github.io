@@ -301,7 +301,8 @@ if (linkLight && linkDark && linkAuto) {
 // Theme toggle button.
 function toggleDarkMode() {
     if ($('body').hasClass('dark')) {
-      $('body').css({opacity: 0, visibility: 'visible'}).animate({opacity: 1}, 500);
+      $('body').css({opacity: 1, visibility: 'visible'});
+      // $('body').css({opacity: 0, visibility: 'visible'}).animate({opacity: 1}, 500);
       $('body').removeClass('dark');
       $('link[title=hl-light]')[0].disabled = false;
       $('link[title=hl-dark]')[0].disabled = true;
@@ -309,7 +310,7 @@ function toggleDarkMode() {
       $('.js-dark-toggle i').addClass('fa-moon');
       localStorage.setItem('dark_mode', '0');
     } else {
-      $('body').css({opacity: 0, visibility: 'visible'}).animate({opacity: 1}, 500);
+      $('body').css({opacity: 1, visibility: 'visible'});
       $('body').addClass('dark');
       $('link[title=hl-light]')[0].disabled = true;
       $('link[title=hl-dark]')[0].disabled = false;

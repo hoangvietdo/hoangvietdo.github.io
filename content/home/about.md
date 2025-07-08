@@ -8,4 +8,12 @@ active: true
 headless: true
 
 author: admin
+
+design:
+ background:
+#    color: rgb(0,0,0)
+   text_color_light: true
+   video:
+     path: video.mp4
+ css_class: fullscreen
 ---

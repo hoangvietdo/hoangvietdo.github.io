@@ -6,11 +6,11 @@
 main:
   - name: Open-source Software
     url: '#open-source-software'
-    weight: 40
+    weight: 10
   - name: Publications
     url: '#publications'
-    weight: 40
+    weight: 20
   - name: Research Experience
     url: '#research-experience'
-    weight: 40
+    weight: 30
   

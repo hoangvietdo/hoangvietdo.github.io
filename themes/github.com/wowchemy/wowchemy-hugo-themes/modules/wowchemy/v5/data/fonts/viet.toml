@@ -1,0 +1,7 @@
+# Font style metadata
+name = "viet"
+
+heading_font = "fontawesome-webfont"
+body_font = "fontawesome-webfont"
+nav_font = "fontawesome-webfont"
+mono_font = "fontawesome-webfont"
