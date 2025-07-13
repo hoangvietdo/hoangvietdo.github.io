@@ -36,16 +36,25 @@ social:
     icon_pack: fas
     link: mailto:hoangvietdo.bk@gmail.com
     display:
-      header: false
+      header: true
   - icon: github
     icon_pack: fab
     link: https://github.com/hoangvietdo
     display:
-      header: false
+      header: true
   - icon: graduation-cap
+    display:
+      header: true
     icon_pack: fas
     link: https://scholar.google.com/citations?user=EoqJPLsAAAAJ&hl=en
+  - icon: linkedin
+    display:
+      header: true
+    icon_pack: fab
+    link: https://www.linkedin.com/in/hoang-viet-do-ab4a10374/
   - icon: cv
+    display:
+      header: true
     icon_pack: ai
     link: files/resume/cv_viet.pdf
 
