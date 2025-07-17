@@ -23,7 +23,7 @@ education:
     - course: Ph.D. in Intelligent Mechatronics Engineering
       institution: Sejong University, Seoul, Republic of Korea
       year: "2025"
-    - course: M.S. in Software Convergence
+    - course: M.Eng. in Unmanned Vehicle Engineering
       institution: Sejong University, Seoul, Republic of Korea
       year: "2021"
     - course: B.S. in Control Engineering and Automation Technology
