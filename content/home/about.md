@@ -1,6 +1,8 @@
 ---
 widget: about
 
+weight: 10
+
 # Activate this widget? true/false
 active: true
 
