@@ -17,5 +17,5 @@ image:
 
 <img src="/images/drone_platform.png" align="center"/>
 <img src="/images/Moving_2_x2_speed.gif" align="center"/>
-<img src="/images/FInalOfFinal_x2_Speed.gif" align="center"/>
+<img src="/images/FinalOfFinal_x2_Speed.gif" align="center"/>
 <img src="/images/gazebo.gif" align="center" width="800" height="800"/>
