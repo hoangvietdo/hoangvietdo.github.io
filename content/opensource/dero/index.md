@@ -16,7 +16,7 @@ links:
   - icon_pack: fas
     icon: scroll
     name: PDF
-    url: 'https://ieeexplore.ieee.org/abstract/document/8952412'
+    url: 'https://ieeexplore.ieee.org/document/10801645'
   - icon_pack: fas
     icon: scroll
     name: arXiv
