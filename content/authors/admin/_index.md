@@ -10,12 +10,12 @@ status:
 superuser: true
 
 # Role/position/tagline
-role: Postdoctoral Researcher
+role: SLAM Researcher
 
 # Organizations/Affiliations to show in About widget
 organizations:
-  - name: iNCSL, Sejong University
-    url: https://sites.google.com/view/incsl/home
+  - name: MobilTech Co., Ltd.
+    url: https://www.mobiltech.io/
 
 # Education to show in About widget
 education:
@@ -63,7 +63,7 @@ highlight_name: true # Highlight the author in author lists? (true/false)
 
 ### Biography
 
-- I am currently a Postdoctoral Researcher at iNCSL, Sejong University in Seoul, Republic of Korea, working under the supervision of ***Prof. Jin Woo Song***.
+- I am currently a SLAM Researcher at MobilTech Co., Ltd. in Seoul, South Korea. Previously, I earned my Ph.D. from Sejong University under the supervision of ***Prof. Jin Woo Song***.
 {style="font-size: 0.95rem; text-align: justify;"}
 
 - My research focuses on artificial intelligence for robotics, with an emphasis on Kalman filtering, SLAM, state estimation, and sensor fusion using LiDAR, radar, cameras, IMUs, and GNSS.
