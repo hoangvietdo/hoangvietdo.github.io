@@ -1,7 +1,7 @@
 ---
 title: "Real-Time Smoothing Filter Based on Constraints for Backward Filtering"
-date:
-publishDate:
+date: 2026-01-01
+publishDate: 2026-01-01
 authors: ["Joo Han Lee", "Yong Hun Kim", "***Hoang Viet Do***", "Bo Sung Ko", "Jin Woo Song"]
 author_notes: ["", "", "", "", "Corresponding author"]
 publication_types: ["2"]
