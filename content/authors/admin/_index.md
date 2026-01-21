@@ -63,7 +63,7 @@ highlight_name: true # Highlight the author in author lists? (true/false)
 
 ### Biography
 
-- I am currently a SLAM Researcher at MobilTech Co., Ltd. in Seoul, South Korea. Previously, I earned my Ph.D. from Sejong University under the supervision of ***Prof. Jin Woo Song***.
+- I am currently a SLAM Researcher at MobilTech Co., Ltd. located in Seoul, Republic of Korea. Previously, I earned my Ph.D. from Sejong University under the supervision of [Prof. Jin Woo Song](tes.google.com/view/incsl).
 {style="font-size: 0.95rem; text-align: justify;"}
 
 - My research focuses on artificial intelligence for robotics, with an emphasis on Kalman filtering, SLAM, state estimation, and sensor fusion using LiDAR, radar, cameras, IMUs, and GNSS.

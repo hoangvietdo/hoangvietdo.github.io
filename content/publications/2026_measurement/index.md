@@ -1,7 +1,7 @@
 ---
 title: "Real-Time Smoothing Filter Based on Constraints for Backward Filtering"
-date: 2026-02-24
-publishDate: 2026-02-24
+date:
+publishDate:
 authors: ["Joo Han Lee", "Yong Hun Kim", "***Hoang Viet Do***", "Bo Sung Ko", "Jin Woo Song"]
 author_notes: ["", "", "", "", "Corresponding author"]
 publication_types: ["2"]
@@ -17,11 +17,11 @@ links:
     name: PDF
     url: 'https://www.sciencedirect.com/science/article/pii/S026322412503372X?casa_token=KZskutorkqsAAAAA:oGzooALCzpFMQgEerTc-p478H5Bw0l1zdJF_zMX252w42tVjIf0WoySu6UsChrSL8SqNaoqJJiw6'
 
-image:
-    placement: 1
-    focal_point: 'Center'
-    preview_only: false
-    caption: ""
+# image:
+#     placement: 1
+#     focal_point: 'Center'
+#     preview_only: false
+#     caption: ""
 ---
 
 ### Abstract:
