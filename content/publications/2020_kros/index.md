@@ -3,14 +3,14 @@ title: "A dual fault detection algorithm based on the federated Kalman filter to
 date: 2020-02-01
 publishDate: 2020-10-13
 authors: ["Eung Ju Kim", "Seong Taek Kim", "Yong Hun Kim", "Min Jun Choi", "***Hoang Viet Do***", "Jin Woo Song"]
-author_notes: ["", "", "Corresponding author"]
+author_notes: ["", "", "", "", "", "Corresponding author"]
 publication_types: ["2"]
 show_date: false
 reading_time: true
 pager: true
 
 featured: true
-publication: "Journal of Institute of Control, Robotics and Systems"
+publication: "Journal of Institute of Control, Robotics and Systems, vol. 26, pp. 136~143, 2020 (in Korean)"
 links:
   - icon_pack: fas
     icon: scroll
