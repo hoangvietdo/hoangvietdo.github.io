@@ -1,0 +1,92 @@
+// One exercise of a workout: what to lift today, set rows to log weight / reps / failure /
+// done, and the call for next time. Used on Today and in the workout editor.
+
+import { h, icon, numberInput, select } from '../dom.js';
+import { hintFromSets, progressionHint } from '../engine/progression.js';
+import { loadIncrementKg } from '../engine/settings.js';
+import { isWorking } from '../engine/sets.js';
+import * as fmt from '../format.js';
+import { addSet, removeById, toggleDone } from '../model.js';
+
+/** What to lift, from the sessions before `before`. */
+export function previousHint(ctx, exercise, history, before) {
+  if (!exercise) return null;
+  return progressionHint(exercise, history, { before, incrementKg: loadIncrementKg(ctx.state.settings, exercise.equipment) });
+}
+
+/** The call for next time, from the sets ticked off in this workout. */
+export function nextHint(ctx, exercise, entry, date) {
+  const done = entry.sets.filter(isWorking);
+  if (!exercise || !done.length) return null;
+  return hintFromSets(exercise, done, date, loadIncrementKg(ctx.state.settings, exercise.equipment));
+}
+
+export function adviceBox(hint, exercise, unit, { prefix = '', showLast = true } = {}) {
+  const call = fmt.advice(hint, unit, exercise.isTimed);
+  return h('div', { class: `advice tone-${call.tone}` },
+    h('div', {},
+      h('span', { class: 'advice-title' }, `${call.icon} ${prefix}${call.title}`),
+      h('span', { class: 'advice-text' }, ` · ${call.text}`)),
+    h('div', { class: 'advice-why' }, fmt.adviceReason(hint, exercise)),
+    showLast && h('div', { class: 'advice-last' }, fmt.lastTime(hint, unit, exercise.isTimed)));
+}
+
+export function newExerciseNote(exercise) {
+  return h('div', { class: 'advice tone-new' },
+    h('div', { class: 'advice-title' }, '✨ First time'),
+    h('div', { class: 'advice-why' }, `Start light and find a weight you can lift ${exercise.repLow}–${exercise.repHigh} times with 1–3 reps to spare.`));
+}
+
+/** Editable card for one exercise of `session`. */
+export function exerciseLogger(ctx, session, entry, { exercise, history, onRemove }) {
+  const unit = ctx.state.settings.unit;
+  const timed = exercise?.isTimed ?? false;
+  const date = new Date(session.date);
+  const before = previousHint(ctx, exercise, history, date);
+  const after = nextHint(ctx, exercise, entry, date);
+  const done = entry.sets.filter(isWorking).length;
+  const live = !session.endDate;
+  let number = 0;
+  return h('section', { class: 'card exercise' },
+    h('div', { class: 'exercise-head' },
+      h('h3', { class: 'grow' }, entry.name),
+      entry.targetSets > 0 && h('span', { class: `pill${done >= entry.targetSets ? ' done' : ''}` }, `${done}/${entry.targetSets} sets`),
+      h('button', { class: 'icon-btn', 'aria-label': `Remove ${entry.name}`, onClick: onRemove }, icon('trash', 18))),
+    before ? adviceBox(before, exercise, unit, { prefix: 'Today: ' }) : exercise && newExerciseNote(exercise),
+    entry.sets.length > 0 && h('div', { class: 'set-row set-head', 'aria-hidden': 'true' },
+      h('span', {}, 'Set'), h('span', {}, unit), h('span', {}), h('span', {}, timed ? 'Sec' : 'Reps'), h('span', {}, 'Fail'), h('span', {}, 'Done')),
+    entry.sets.map((set) => setRow(ctx, entry, set, set.warmup ? 'W' : String(++number), unit)),
+    h('button', {
+      class: 'row row-button accent add-set',
+      onClick: () => ctx.update(() => addSet(entry, before, exercise, { done: !live })),
+    }, icon('plus', 18), h('span', { class: 'grow' }, 'Add set')),
+    after && adviceBox(after, exercise, unit, { prefix: 'Next time: ', showLast: false }));
+}
+
+function setRow(ctx, entry, set, label, unit) {
+  const done = set.done !== false;
+  const failed = set.rir === 0;
+  return h('div', { class: `set-row${done ? ' is-done' : ''}` },
+    // The set number doubles as a menu: warm-up or delete.
+    select({
+      className: `set-num${set.warmup ? ' warm' : ''}`,
+      value: '',
+      label: `Set ${label} options`,
+      options: [['', label], ['warmup', set.warmup ? 'Make it a working set' : 'Mark as warm-up'], ['delete', 'Delete set']],
+      onChange: (choice) => {
+        if (choice === 'warmup') ctx.update(() => { set.warmup = !set.warmup; });
+        else if (choice === 'delete') ctx.update(() => removeById(entry.sets, set.id));
+      },
+    }),
+    numberInput({ value: fmt.inputWeight(set.weightKg, unit), decimal: true, label: `Weight in ${unit}`, onInput: (v) => ctx.mutate(() => { set.weightKg = fmt.toKg(v, unit); }) }),
+    h('span', { class: 'times muted', 'aria-hidden': 'true' }, '×'),
+    numberInput({ value: set.reps, label: 'Reps', onInput: (v) => ctx.mutate(() => { set.reps = Math.round(v); }) }),
+    h('button', {
+      class: `fail${failed ? ' on' : ''}`, 'aria-pressed': String(failed), 'aria-label': 'Went to failure on this set',
+      onClick: () => ctx.update(() => { set.rir = failed ? null : 0; }),
+    }, 'Fail'),
+    h('button', {
+      class: `check${done ? ' on' : ''}`, 'aria-pressed': String(done), 'aria-label': done ? 'Done. Tap to undo' : 'Mark set as done',
+      onClick: () => ctx.update(() => toggleDone(entry, set)),
+    }, icon('check', 18)));
+}
