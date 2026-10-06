@@ -46,6 +46,7 @@ export const LIBRARY = [
 
   // Shoulders
   ex('lateral_raise', 'Lateral Raise', ['shoulders'], [], 'dumbbell', [12, 20]),
+  ex('machine_standing_lateral_raise', 'Machine Standing Lateral Raise', ['shoulders'], [], 'machine', [12, 20]),
   ex('dumbbell_shoulder_press', 'Dumbbell Shoulder Press', ['shoulders'], ['triceps'], 'dumbbell', [8, 12]),
   ex('overhead_press', 'Overhead Press', ['shoulders'], ['triceps'], 'barbell', [5, 8]),
   ex('cable_lateral_raise', 'Cable Lateral Raise', ['shoulders'], [], 'cable', [12, 20]),

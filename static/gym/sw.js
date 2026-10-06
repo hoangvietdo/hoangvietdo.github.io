@@ -2,7 +2,7 @@
 // Bump VERSION whenever any file changes; the new version activates the next time the
 // app is opened fresh.
 
-const VERSION = 'gymtrack-v8';
+const VERSION = 'gymtrack-v9';
 const FILES = [
   './',
   './index.html',
