@@ -492,6 +492,18 @@ input.num.wide { width: 96px; }
   font-weight: 600;
 }
 .set-row input.num { width: 100%; }
+.set-load-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+.load-mode { margin: 0 16px 6px; padding-left: 0; padding-right: 0; }
 .set-row .times { text-align: center; }
 .set-row.is-done { background: rgba(24, 153, 90, 0.08); }
 .set-row.is-done input.num { background: transparent; font-weight: 600; }

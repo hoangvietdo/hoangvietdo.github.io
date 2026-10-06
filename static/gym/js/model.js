@@ -53,7 +53,8 @@ export function createSession(state, { title = 'Workout', date = new Date(), end
 }
 
 export function addEntry(session, exercise, targetSets = 0) {
-  const entry = { id: uid(), exerciseId: exercise.id, name: exercise.name, unit: exercise.defaultUnit ?? null, targetSets, sets: [] };
+  const loadMode = exercise.defaultLoadMode ?? (exercise.equipment === 'bodyweight' ? 'bodyweight' : null);
+  const entry = { id: uid(), exerciseId: exercise.id, name: exercise.name, unit: exercise.defaultUnit ?? null, loadMode, targetSets, sets: [] };
   session.entries.push(entry);
   return entry;
 }
@@ -64,6 +65,7 @@ export function startSession(state, plan) {
   for (const item of plan?.exercises ?? []) {
     const entry = addEntry(session, item.exercise, item.sets);
     const weightKg = item.hint?.weightKg ?? 0;
+    if (entry.loadMode === 'bodyweight' && weightKg > 0) entry.loadMode = 'added';
     const reps = item.hint?.targetReps ?? item.exercise.repLow;
     for (let i = 0; i < item.sets; i += 1) {
       entry.sets.push({ id: uid(), reps, weightKg, rir: null, warmup: false, done: false });
@@ -76,6 +78,7 @@ export function startSession(state, plan) {
  * workout they start un-ticked; when editing a past workout they count straight away. */
 export function addSet(entry, hint, exercise, { done = true } = {}) {
   const last = entry.sets[entry.sets.length - 1];
+  if (!last && entry.loadMode === 'bodyweight' && hint?.weightKg > 0) entry.loadMode = 'added';
   entry.sets.push({
     id: uid(),
     reps: last?.reps ?? hint?.targetReps ?? exercise?.repLow ?? 8,

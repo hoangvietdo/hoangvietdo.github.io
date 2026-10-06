@@ -44,18 +44,21 @@ export function hintFromSets(exercise, lastSets, lastDate, incrementKg = null) {
   const reachedFailure = working.some((s) => s.rir === 0);
   const step = incrementKg ?? EQUIPMENT[exercise.equipment]?.incrementKg ?? 2.5;
   const make = (kind, weightKg, targetReps) => ({ kind, weightKg, targetReps, lastDate, lastSets: working, reachedFailure });
+  const assisted = exercise.defaultLoadMode === 'assisted';
 
   if (exercise.isTimed) return make('addReps', top, most + 5);
   if (fewest >= exercise.repHigh) {
     const steps = !reachedFailure && fewest >= exercise.repHigh + 3 ? 2 : 1;
+    if (assisted) return make('decreaseAssistance', Math.max(0, top - steps * step), exercise.repLow);
     return make('increaseLoad', top + steps * step, exercise.repLow);
   }
   if (most < exercise.repLow) {
+    if (assisted && reachedFailure) return make('increaseAssistance', top + step, exercise.repLow);
     if (reachedFailure && top > 0) {
       const lower = Math.round((top - Math.max(step, top * 0.05)) / step) * step;
       return make('decreaseLoad', Math.max(0, Math.min(lower, top - step)), exercise.repLow);
     }
-    return make('repeatLoad', top, exercise.repLow);
+    return make(assisted ? 'repeatAssistance' : 'repeatLoad', top, exercise.repLow);
   }
   return make('addReps', top, Math.min(fewest + 1, exercise.repHigh));
 }

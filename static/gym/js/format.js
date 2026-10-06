@@ -87,11 +87,21 @@ export function setList(list, unit, isTimed) {
 }
 
 /** The call to make for an exercise: { tone: 'up' | 'same' | 'down', icon, title, text }. */
-export function advice(hint, unit, isTimed) {
+export function advice(hint, unit, exercise) {
+  const isTimed = exercise.isTimed;
   const reps = isTimed ? `${hint.targetReps} s` : `${hint.targetReps} reps`;
   const wasBodyweight = Math.max(...hint.lastSets.map((s) => s.weightKg)) <= 0;
   const load = weight(hint.weightKg, unit);
+  const assistance = `${num(fromKg(hint.weightKg, unit))} ${unit}`;
   switch (hint.kind) {
+    case 'decreaseAssistance':
+      return hint.weightKg <= 0
+        ? { tone: 'up', icon: '⬆', title: 'Try bodyweight', text: reps }
+        : { tone: 'up', icon: '⬆', title: 'Reduce assistance', text: `${assistance} assistance × ${reps}` };
+    case 'increaseAssistance':
+      return { tone: 'down', icon: '⬇', title: 'Increase assistance', text: `${assistance} assistance × ${reps}` };
+    case 'repeatAssistance':
+      return { tone: 'same', icon: '➡', title: 'Same assistance', text: `${assistance} assistance × ${reps}` };
     case 'increaseLoad':
       return wasBodyweight
         ? { tone: 'up', icon: '⬆', title: 'Add weight', text: `+${load} or a harder variation, ${reps}` }
@@ -102,6 +112,7 @@ export function advice(hint, unit, isTimed) {
       return { tone: 'same', icon: '➡', title: 'Same weight', text: `${load} × ${reps}` };
     default:
       if (isTimed) return { tone: 'same', icon: '➡', title: 'Hold longer', text: reps };
+      if (exercise.defaultLoadMode === 'assisted') return { tone: 'same', icon: '➡', title: 'Same assistance, one more rep', text: `${assistance} assistance × ${reps}` };
       return wasBodyweight
         ? { tone: 'same', icon: '➡', title: 'More reps', text: reps }
         : { tone: 'same', icon: '➡', title: 'Same weight, one more rep', text: `${load} × ${reps}` };
@@ -112,6 +123,12 @@ export function advice(hint, unit, isTimed) {
 export function adviceReason(hint, exercise) {
   const range = `${exercise.repLow}–${exercise.repHigh}`;
   switch (hint.kind) {
+    case 'decreaseAssistance':
+      return `Every set reached ${exercise.repHigh}+ reps, so use less help next time.`;
+    case 'increaseAssistance':
+      return `You hit failure before ${exercise.repLow} reps, so use more help for now.`;
+    case 'repeatAssistance':
+      return `Get every set into the ${range} rep range before reducing assistance.`;
     case 'increaseLoad':
       return `Every set reached ${exercise.repHigh}+ ${exercise.isTimed ? 'seconds' : 'reps'}, the top of the ${range} range.`;
     case 'decreaseLoad':
@@ -119,6 +136,7 @@ export function adviceReason(hint, exercise) {
     case 'repeatLoad':
       return `Get every set into the ${range} rep range before adding weight.`;
     default:
+      if (exercise.defaultLoadMode === 'assisted') return `Add reps until every set reaches ${exercise.repHigh}, then reduce assistance.`;
       return exercise.isTimed
         ? 'Add a few seconds each session.'
         : `Add reps until every set reaches ${exercise.repHigh}, then go up in weight.`;

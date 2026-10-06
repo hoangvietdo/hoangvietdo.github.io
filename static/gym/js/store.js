@@ -140,6 +140,7 @@ function cleanSession(raw) {
         exerciseId: e.exerciseId,
         name: text(e.name, e.exerciseId),
         unit: e.unit === 'lb' || e.unit === 'kg' ? e.unit : null,
+        loadMode: ['bodyweight', 'added', 'assisted'].includes(e.loadMode) ? e.loadMode : null,
         targetSets: Math.max(0, Math.round(number(e.targetSets, 0))),
         sets: list(e.sets, (s) => (s
           ? {

@@ -62,7 +62,7 @@ function liftView(ctx, workouts, catalog) {
   }
   const performed = [...counts.keys()]
     .map((id) => catalog.get(id))
-    .filter(Boolean)
+    .filter((exercise) => exercise && exercise.defaultLoadMode !== 'assisted')
     .sort((a, b) => counts.get(b.id) - counts.get(a.id) || a.name.localeCompare(b.name));
   if (!performed.length) {
     return section(null, card(h('div', { class: 'row muted' }, 'Log a few workouts to see strength trends here.')));

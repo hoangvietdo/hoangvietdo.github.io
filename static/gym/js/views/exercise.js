@@ -22,20 +22,24 @@ export function nextHint(ctx, exercise, entry, date, unit = entry.unit ?? exerci
 }
 
 export function adviceBox(hint, exercise, unit, { prefix = '', showLast = true } = {}) {
-  const call = fmt.advice(hint, unit, exercise.isTimed);
+  const call = fmt.advice(hint, unit, exercise);
   return h('div', { class: `advice tone-${call.tone}` },
     h('div', {},
       h('span', { class: 'advice-title' }, `${call.icon} ${prefix}${call.title}`),
       h('span', { class: 'advice-text' }, ` · ${call.text}`)),
     h('div', { class: 'advice-why' }, fmt.adviceReason(hint, exercise)),
     showLast && h('div', { class: 'advice-last' }, fmt.lastTime(hint, unit, exercise.isTimed)),
-    isPlateLoaded(exercise) && h('div', { class: 'advice-last' }, `Plate weight only; ${exercise.equipment === 'smith' ? 'Smith starting weight' : 'bar'} excluded.`));
+    isPlateLoaded(exercise) && h('div', { class: 'advice-last' }, `Plate weight only; ${exercise.equipment === 'smith' ? 'Smith starting weight' : 'bar'} excluded.`),
+    exercise.equipment === 'bodyweight' && h('div', { class: 'advice-last' }, 'Body weight from Settings is included in workout volume.'),
+    exercise.defaultLoadMode === 'assisted' && h('div', { class: 'advice-last' }, 'Enter the machine assistance; lower assistance is harder.'));
 }
 
 export function newExerciseNote(exercise) {
   return h('div', { class: 'advice tone-new' },
     h('div', { class: 'advice-title' }, '✨ First time'),
-    h('div', { class: 'advice-why' }, `Start light and find a weight you can lift ${exercise.repLow}–${exercise.repHigh} times with 1–3 reps to spare.`));
+    h('div', { class: 'advice-why' }, exercise.defaultLoadMode === 'assisted'
+      ? `Start with enough assistance to complete ${exercise.repLow}–${exercise.repHigh} reps with 1–3 reps to spare.`
+      : `Start light and find a weight you can lift ${exercise.repLow}–${exercise.repHigh} times with 1–3 reps to spare.`));
 }
 
 /** Editable card for one exercise of `session`. */
@@ -43,6 +47,8 @@ export function exerciseLogger(ctx, session, entry, { exercise, history, onRemov
   const unit = entry.unit ?? exercise?.defaultUnit ?? ctx.state.settings.unit;
   const timed = exercise?.isTimed ?? false;
   const platesOnly = isPlateLoaded(exercise);
+  const loadMode = entryLoadMode(entry, exercise);
+  const bodyweightChoice = exercise?.equipment === 'bodyweight';
   const date = new Date(session.date);
   const before = previousHint(ctx, exercise, history, date, unit);
   const after = nextHint(ctx, exercise, entry, date, unit);
@@ -53,9 +59,20 @@ export function exerciseLogger(ctx, session, entry, { exercise, history, onRemov
     h('div', { class: 'exercise-head' },
       h('h3', { class: 'grow' }, entry.name),
       platesOnly && h('span', { class: 'pill' }, 'plates only'),
+      loadMode === 'bodyweight' && h('span', { class: 'pill' }, 'bodyweight'),
+      loadMode === 'added' && h('span', { class: 'pill' }, 'BW + added'),
+      loadMode === 'assisted' && h('span', { class: 'pill' }, 'assisted'),
       entry.targetSets > 0 && h('span', { class: `pill${done >= entry.targetSets ? ' done' : ''}` }, `${done}/${entry.targetSets} sets`),
       h('button', { class: 'icon-btn', 'aria-label': `Remove ${entry.name}`, onClick: onRemove }, icon('trash', 18))),
     before ? adviceBox(before, exercise, unit, { prefix: 'Today: ' }) : exercise && newExerciseNote(exercise),
+    bodyweightChoice && h('label', { class: 'row field load-mode' },
+      h('span', { class: 'label grow' }, 'Load'),
+      select({
+        value: loadMode,
+        options: [['bodyweight', 'Bodyweight only'], ['added', 'Bodyweight + added weight']],
+        label: `Load type for ${entry.name}`,
+        onChange: (value) => ctx.update(() => { entry.loadMode = value; }),
+      })),
     entry.sets.length > 0 && h('div', { class: 'set-row set-head' },
       h('span', { 'aria-hidden': 'true' }, 'Set'),
       select({
@@ -64,7 +81,7 @@ export function exerciseLogger(ctx, session, entry, { exercise, history, onRemov
       }),
       h('span', {}), h('span', { 'aria-hidden': 'true' }, timed ? 'Sec' : 'Reps'),
       h('span', { 'aria-hidden': 'true' }, 'Last rep'), h('span', { 'aria-hidden': 'true' }, 'Done')),
-    entry.sets.map((set) => setRow(ctx, entry, set, set.warmup ? 'W' : String(++number), unit, platesOnly)),
+    entry.sets.map((set) => setRow(ctx, entry, set, set.warmup ? 'W' : String(++number), unit, platesOnly, loadMode)),
     h('button', {
       class: 'row row-button accent add-set',
       onClick: () => ctx.update(() => addSet(entry, before, exercise, { done: !live })),
@@ -76,7 +93,14 @@ function isPlateLoaded(exercise) {
   return exercise?.equipment === 'barbell' || exercise?.equipment === 'smith';
 }
 
-function setRow(ctx, entry, set, label, unit, platesOnly) {
+function entryLoadMode(entry, exercise) {
+  if (entry.loadMode) return entry.loadMode;
+  if (exercise?.defaultLoadMode) return exercise.defaultLoadMode;
+  if (exercise?.equipment !== 'bodyweight') return null;
+  return entry.sets.some((set) => set.weightKg > 0) ? 'added' : 'bodyweight';
+}
+
+function setRow(ctx, entry, set, label, unit, platesOnly, loadMode) {
   const done = set.done !== false;
   const failed = set.rir === 0;
   return h('div', { class: `set-row${done ? ' is-done' : ''}` },
@@ -91,11 +115,15 @@ function setRow(ctx, entry, set, label, unit, platesOnly) {
         else if (choice === 'delete') ctx.update(() => removeById(entry.sets, set.id));
       },
     }),
-    numberInput({
-      value: fmt.inputWeight(set.weightKg, unit), decimal: true,
-      label: platesOnly ? `Total plate weight in ${unit}, excluding the bar` : `Weight in ${unit}`,
-      onInput: (v) => ctx.mutate(() => { set.weightKg = fmt.toKg(v, unit); }),
-    }),
+    loadMode === 'bodyweight'
+      ? h('span', { class: 'set-load-label', 'aria-label': 'Bodyweight' }, 'BW')
+      : numberInput({
+        value: fmt.inputWeight(set.weightKg, unit), decimal: true,
+        label: platesOnly
+          ? `Total plate weight in ${unit}, excluding the bar`
+          : loadMode === 'added' ? `Added weight in ${unit}` : loadMode === 'assisted' ? `Assistance in ${unit}` : `Weight in ${unit}`,
+        onInput: (v) => ctx.mutate(() => { set.weightKg = fmt.toKg(v, unit); }),
+      }),
     h('span', { class: 'times muted', 'aria-hidden': 'true' }, '×'),
     numberInput({ value: set.reps, label: 'Reps', onInput: (v) => ctx.mutate(() => { set.reps = Math.round(v); }) }),
     h('button', {

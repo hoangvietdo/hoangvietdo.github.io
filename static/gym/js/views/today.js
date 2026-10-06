@@ -172,6 +172,7 @@ function summary(ctx, session) {
         const exercise = catalog.get(entry.exerciseId);
         const unit = entry.unit ?? exercise?.defaultUnit ?? fallbackUnit;
         const done = entry.sets.filter((s) => s.done !== false && !s.warmup && s.reps > 0);
+        const loadMode = summaryLoadMode(entry, exercise, done);
         const next = nextHint(ctx, exercise, entry, date, unit);
         if (next) calls.push(next.kind);
         return h('div', { class: 'plan-item' },
@@ -180,6 +181,9 @@ function summary(ctx, session) {
             h('span', { class: 'small muted' }, `${done.length} sets`)),
           h('div', { class: 'small muted done-sets' }, fmt.setList(done, unit, exercise?.isTimed)
             + (['barbell', 'smith'].includes(exercise?.equipment) ? ' · plates only' : '')
+            + (loadMode === 'bodyweight' ? ' · bodyweight' : '')
+            + (loadMode === 'added' ? ' · added to bodyweight' : '')
+            + (loadMode === 'assisted' ? ' · assistance' : '')
             + (done.some((s) => s.rir === 0) ? ' · last rep failure' : '')),
           next && adviceBox(next, exercise, unit, { prefix: 'Next time: ', showLast: false }));
       }),
@@ -195,8 +199,8 @@ function workoutAnalysis(analysis, calls, unit) {
   const focus = analysis.focus.slice(0, 3)
     .map((item) => `${muscleName(item.muscle)} ${fmt.sets(item.sets)}`)
     .join(' · ');
-  const increases = calls.filter((kind) => kind === 'increaseLoad').length;
-  const decreases = calls.filter((kind) => kind === 'decreaseLoad').length;
+  const increases = calls.filter((kind) => kind === 'increaseLoad' || kind === 'decreaseAssistance').length;
+  const decreases = calls.filter((kind) => kind === 'decreaseLoad' || kind === 'increaseAssistance').length;
   const failureRate = analysis.workingSets ? analysis.failureSets / analysis.workingSets : 0;
   const effort = analysis.failureSets === 0
     ? 'No sets were marked to failure.'
@@ -239,7 +243,14 @@ function workoutAnalysis(analysis, calls, unit) {
       h('li', {}, progression),
       h('li', {}, density),
       relativeVolume && h('li', {}, relativeVolume))),
-  'Volume is weight × reps for loaded exercises. Barbell and Smith volume include their separate starting weights from Settings; logged weights remain plates only. Muscle sets include half credit for supporting muscles.');
+  'Volume is effective load × reps. Bodyweight modes use your current weight from Settings; assisted work subtracts assistance, and added-weight work adds the external load. Barbell and Smith volume include their separate starting weights. Muscle sets include half credit for supporting muscles.');
+}
+
+function summaryLoadMode(entry, exercise, sets) {
+  if (entry.loadMode) return entry.loadMode;
+  if (exercise?.defaultLoadMode) return exercise.defaultLoadMode;
+  if (exercise?.equipment !== 'bodyweight') return null;
+  return sets.some((set) => set.weightKg > 0) ? 'added' : 'bodyweight';
 }
 
 function analysisStat(label, value) {

@@ -14,13 +14,15 @@ export const EQUIPMENT = {
 
 export const CUSTOM_PREFIX = 'custom.';
 
-function ex(id, name, primary, secondary, equipment, [repLow, repHigh], isTimed = false, defaultUnit = null) {
-  return { id, name, primary, secondary, equipment, repLow, repHigh, isTimed, defaultUnit };
+function ex(id, name, primary, secondary, equipment, [repLow, repHigh], isTimed = false, defaultUnit = null, defaultLoadMode = null) {
+  return { id, name, primary, secondary, equipment, repLow, repHigh, isTimed, defaultUnit, defaultLoadMode };
 }
 
 export const LIBRARY = [
   // Chest
   ex('barbell_bench_press', 'Barbell Bench Press', ['chest'], ['triceps', 'shoulders'], 'barbell', [5, 8]),
+  ex('competition_bench_press', 'Competition Bench Press', ['chest'], ['triceps', 'shoulders'], 'barbell', [1, 5]),
+  ex('paused_bench_press', 'Paused Bench Press', ['chest'], ['triceps', 'shoulders'], 'barbell', [3, 6]),
   ex('incline_dumbbell_press', 'Incline Dumbbell Press', ['chest'], ['shoulders', 'triceps'], 'dumbbell', [8, 12]),
   ex('dumbbell_bench_press', 'Dumbbell Bench Press', ['chest'], ['triceps', 'shoulders'], 'dumbbell', [8, 12]),
   ex('incline_barbell_bench_press', 'Incline Barbell Bench Press', ['chest'], ['shoulders', 'triceps'], 'barbell', [6, 10]),
@@ -31,11 +33,13 @@ export const LIBRARY = [
   ex('pec_deck', 'Pec Deck', ['chest'], [], 'machine', [10, 15]),
   ex('dip', 'Dip', ['chest', 'triceps'], ['shoulders'], 'bodyweight', [6, 12]),
   ex('push_up', 'Push-up', ['chest'], ['triceps', 'shoulders'], 'bodyweight', [10, 20]),
+  ex('assisted_dip', 'Assisted Dip', ['chest', 'triceps'], ['shoulders'], 'machine', [6, 12], false, null, 'assisted'),
 
   // Back
   ex('lat_pulldown', 'Lat Pulldown', ['back'], ['biceps'], 'cable', [8, 12]),
   ex('seated_cable_row', 'Seated Cable Row', ['back'], ['biceps'], 'cable', [8, 12]),
   ex('pull_up', 'Pull-up', ['back'], ['biceps'], 'bodyweight', [5, 10]),
+  ex('assisted_pull_up', 'Assisted Pull-up', ['back'], ['biceps'], 'machine', [5, 10], false, null, 'assisted'),
   ex('barbell_row', 'Barbell Row', ['back'], ['biceps', 'lowerBack'], 'barbell', [6, 10]),
   ex('dumbbell_row', 'One-arm Dumbbell Row', ['back'], ['biceps'], 'dumbbell', [8, 12]),
   ex('chest_supported_row', 'Chest-supported Row', ['back'], ['biceps'], 'machine', [8, 12]),
@@ -75,6 +79,7 @@ export const LIBRARY = [
 
   // Legs
   ex('back_squat', 'Back Squat', ['quads'], ['glutes', 'lowerBack'], 'barbell', [5, 8]),
+  ex('competition_back_squat', 'Competition Back Squat', ['quads'], ['glutes', 'lowerBack'], 'barbell', [1, 5]),
   ex('leg_press', 'Leg Press', ['quads'], ['glutes'], 'machine', [8, 12]),
   ex('hack_squat', 'Hack Squat', ['quads'], ['glutes'], 'machine', [8, 12]),
   ex('smith_squat', 'Smith Machine Squat', ['quads'], ['glutes'], 'smith', [6, 10]),
@@ -91,6 +96,8 @@ export const LIBRARY = [
   ex('walking_lunge', 'Walking Lunge', ['quads'], ['glutes'], 'dumbbell', [10, 16]),
   ex('hip_abduction', 'Hip Abduction', ['glutes'], [], 'machine', [12, 20]),
   ex('deadlift', 'Deadlift', ['glutes', 'lowerBack'], ['hamstrings', 'quads', 'back', 'forearms'], 'barbell', [3, 6]),
+  ex('competition_conventional_deadlift', 'Competition Conventional Deadlift', ['glutes', 'lowerBack'], ['hamstrings', 'quads', 'back', 'forearms'], 'barbell', [1, 5]),
+  ex('sumo_deadlift', 'Sumo Deadlift', ['glutes', 'quads'], ['hamstrings', 'lowerBack', 'back', 'forearms'], 'barbell', [1, 5]),
   ex('back_extension', 'Back Extension', ['lowerBack'], ['glutes', 'hamstrings'], 'bodyweight', [10, 15]),
   ex('standing_calf_raise', 'Standing Calf Raise', ['calves'], [], 'machine', [10, 15]),
   ex('smith_calf_raise', 'Smith Machine Calf Raise', ['calves'], [], 'smith', [10, 15]),
