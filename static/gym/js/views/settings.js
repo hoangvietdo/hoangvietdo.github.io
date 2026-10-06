@@ -2,10 +2,10 @@ import { h, icon, section, card, navBar, select, stepper, toggle, segmented } fr
 import { MUSCLES, muscleName, defaultTargets } from '../engine/muscles.js';
 import { SPLITS } from '../engine/settings.js';
 import { dayKey } from '../engine/calendar.js';
-import { backupJSON, mergeBackup, sampleData, emptyState } from '../store.js';
+import { backupJSON, safetyBackupJSON, mergeBackup, sampleData, emptyState } from '../store.js';
 import { isInstalled } from './today.js';
 
-export const VERSION = '1.0';
+export const VERSION = '1.1';
 
 export function renderSettings(ctx) {
   const s = ctx.state.settings;
@@ -34,6 +34,7 @@ export function renderSettings(ctx) {
     'Age estimates your max heart rate (208 − 0.7 × age), used to judge how hard a run was.'),
     section('Your data', card(
       actionRow('Export backup', () => exportBackup(ctx)),
+      actionRow('Export pre-update safety copy', () => exportSafetyBackup()),
       importRow(ctx),
       actionRow('Load sample data', () => loadSampleData(ctx)),
       actionRow('Erase all data', () => eraseAll(ctx), 'danger')),
@@ -77,10 +78,23 @@ function importRow(ctx) {
 async function exportBackup(ctx) {
   await ctx.flush();
   const name = `gymtrack-backup-${dayKey(new Date())}.json`;
-  const file = new File([backupJSON(ctx.state)], name, { type: 'application/json' });
+  await shareOrDownload(backupJSON(ctx.state), name, 'GymTrack backup');
+}
+
+async function exportSafetyBackup() {
+  const json = await safetyBackupJSON();
+  if (!json) {
+    alert('No pre-update safety copy is available. Your current data is still included in Export backup.');
+    return;
+  }
+  await shareOrDownload(json, `gymtrack-before-v1.1-${dayKey(new Date())}.json`, 'GymTrack pre-update safety copy');
+}
+
+async function shareOrDownload(json, name, title) {
+  const file = new File([json], name, { type: 'application/json' });
   if (navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: 'GymTrack backup' });
+      await navigator.share({ files: [file], title });
       return;
     } catch (error) {
       if (error.name === 'AbortError') return;

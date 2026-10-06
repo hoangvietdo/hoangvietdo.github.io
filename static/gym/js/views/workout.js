@@ -102,7 +102,8 @@ export function renderPicker(ctx) {
       // During a live workout, lay out three sets from the progression target to tick off.
       if (!session.endDate) {
         const history = state.sessions.filter((s) => s.id !== session.id).map(toWorkout);
-        const hint = previousHint(ctx, exercise, history, new Date(session.date));
+        const unit = entry.unit ?? exercise.defaultUnit ?? state.settings.unit;
+        const hint = previousHint(ctx, exercise, history, new Date(session.date), unit);
         for (let i = 0; i < 3; i += 1) {
           entry.sets.push({ id: uid(), reps: hint?.targetReps ?? exercise.repLow, weightKg: hint?.weightKg ?? 0, rir: null, warmup: false, done: false });
         }

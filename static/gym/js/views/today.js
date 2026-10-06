@@ -1,6 +1,7 @@
 import { h, icon, svg, section, card, select } from '../dom.js';
 import { muscleName } from '../engine/muscles.js';
 import { FEELINGS } from '../engine/readiness.js';
+import { analyzeWorkout } from '../engine/workout-analysis.js';
 import * as fmt from '../format.js';
 import {
   catalogFor, computeRecommendation, finishSession, plannedSets, removeById, setFeeling, setSleep,
@@ -85,14 +86,14 @@ function verdictCard(rec) {
 }
 
 function planSection(ctx, plan) {
-  const unit = ctx.state.settings.unit;
+  const fallbackUnit = ctx.state.settings.unit;
   return section(`Today’s exercises · ${plan.name} · ~${plan.estimatedMinutes} min`,
     card(
       plan.exercises.map((item) => h('div', { class: 'plan-item' },
         h('div', { class: 'plan-line' },
           h('span', { class: 'row-title grow' }, item.exercise.name),
-          h('span', { class: 'pill' }, planTarget(item, unit))),
-        item.hint ? adviceBox(item.hint, item.exercise, unit) : newExerciseNote(item.exercise))),
+          h('span', { class: 'pill' }, planTarget(item, item.exercise.defaultUnit ?? fallbackUnit))),
+        item.hint ? adviceBox(item.hint, item.exercise, item.exercise.defaultUnit ?? fallbackUnit) : newExerciseNote(item.exercise))),
       h('div', { class: 'row' }, h('button', {
         class: 'btn primary block',
         onClick: () => ctx.update((s) => startSession(s, plan)),
@@ -157,14 +158,19 @@ function finish(ctx, session) {
 
 function summary(ctx, session) {
   const catalog = catalogFor(ctx.state);
-  const unit = ctx.state.settings.unit;
+  const fallbackUnit = ctx.state.settings.unit;
   const date = new Date(session.date);
-  return section(`Today’s workout · ${session.title || 'Workout'}`,
+  const workout = toWorkout(session);
+  const analysis = analyzeWorkout(workout, catalog);
+  const calls = [];
+  const recap = section(`Today’s workout · ${session.title || 'Workout'}`,
     card(
       session.entries.map((entry) => {
         const exercise = catalog.get(entry.exerciseId);
+        const unit = entry.unit ?? exercise?.defaultUnit ?? fallbackUnit;
         const done = entry.sets.filter((s) => s.done !== false && !s.warmup && s.reps > 0);
-        const next = nextHint(ctx, exercise, entry, date);
+        const next = nextHint(ctx, exercise, entry, date, unit);
+        if (next) calls.push(next.kind);
         return h('div', { class: 'plan-item' },
           h('div', { class: 'plan-line' },
             h('span', { class: 'row-title grow' }, entry.name),
@@ -175,6 +181,40 @@ function summary(ctx, session) {
       h('button', { class: 'row row-button accent', onClick: () => ctx.go(`#/workout/${session.id}`) },
         h('span', { class: 'grow' }, 'Edit this workout'), icon('chevron', 18))),
     'These calls are also shown on the exercise the next time it comes up.');
+  return [recap, workoutAnalysis(analysis, calls, fallbackUnit)];
+}
+
+function workoutAnalysis(analysis, calls, unit) {
+  const focus = analysis.focus.slice(0, 3)
+    .map((item) => `${muscleName(item.muscle)} ${fmt.sets(item.sets)}`)
+    .join(' · ');
+  const increases = calls.filter((kind) => kind === 'increaseLoad').length;
+  const decreases = calls.filter((kind) => kind === 'decreaseLoad').length;
+  const failureRate = analysis.workingSets ? analysis.failureSets / analysis.workingSets : 0;
+  const effort = analysis.failureSets === 0
+    ? 'No sets were marked to failure.'
+    : failureRate > 0.25
+      ? `${analysis.failureSets} of ${analysis.workingSets} sets reached failure. That is a high-effort session, so allow extra recovery.`
+      : `${analysis.failureSets} ${analysis.failureSets === 1 ? 'set' : 'sets'} reached failure; most work stayed short of failure.`;
+  const progression = increases
+    ? `${increases} ${increases === 1 ? 'exercise is' : 'exercises are'} ready for more weight next time.`
+    : decreases
+      ? `${decreases} ${decreases === 1 ? 'exercise needs' : 'exercises need'} a lighter load next time.`
+      : 'Keep the load and build reps on the next session.';
+
+  return section('Workout analysis', card(
+    h('div', { class: 'analysis-stats' },
+      analysisStat('Working sets', analysis.workingSets),
+      analysisStat('Exercises', analysis.exercises),
+      analysis.durationMinutes != null && analysisStat('Duration', `${analysis.durationMinutes} min`),
+      analysis.volumeKg > 0 && analysisStat('Recorded volume', `${fmt.num(fmt.fromKg(analysis.volumeKg, unit), 0)} ${unit}`)),
+    focus && h('div', { class: 'analysis-focus' }, h('div', { class: 'eyebrow' }, 'Muscle focus'), h('div', {}, focus)),
+    h('ul', { class: 'analysis-notes' }, h('li', {}, effort), h('li', {}, progression))),
+  'Volume is weight × reps for loaded exercises. Muscle sets include half credit for supporting muscles.');
+}
+
+function analysisStat(label, value) {
+  return h('div', { class: 'analysis-stat' }, h('strong', {}, value), h('span', { class: 'small muted' }, label));
 }
 
 // Check-in, readiness and muscles

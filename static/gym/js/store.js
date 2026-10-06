@@ -3,7 +3,7 @@
 //
 // state = {
 //   version, settings,
-//   sessions: [{ id, date, endDate|null, title, note, entries: [{ id, exerciseId, name, targetSets, sets: [{ id, reps, weightKg, rir|null, warmup, done }] }] }],
+//   sessions: [{ id, date, endDate|null, title, note, entries: [{ id, exerciseId, name, unit|null, targetSets, sets: [{ id, reps, weightKg, rir|null, warmup, done }] }] }],
 //   cardio: [{ id, date, kind, durationMinutes, distanceKm|null, avgHr|null, effort|null, note }],
 //   customExercises: [{ id, name, primary, secondary, equipment, repLow, repHigh, isTimed }],
 //   checkIns: [{ day: 'YYYY-MM-DD', feeling|null, sleepHours|null }],
@@ -12,18 +12,21 @@
 
 import { makeSettings } from './engine/settings.js';
 import { Catalog } from './engine/exercises.js';
-import { addDays, startOfDay } from './engine/calendar.js';
+import { addDays, dayKey, startOfDay } from './engine/calendar.js';
 import { MUSCLES } from './engine/muscles.js';
 
 const DB_NAME = 'gymtrack';
 const STORE = 'kv';
 const KEY = 'state';
 const FALLBACK_KEY = 'gymtrack-state';
+const CURRENT_VERSION = 2;
+const SAFETY_BACKUP_KEY = 'safety-before-v2';
+const SAFETY_FALLBACK_KEY = 'gymtrack-safety-before-v2';
 
 export const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`);
 
 export function emptyState() {
-  return { version: 1, settings: makeSettings(), sessions: [], cardio: [], customExercises: [], checkIns: [] };
+  return { version: CURRENT_VERSION, settings: makeSettings(), sessions: [], cardio: [], customExercises: [], checkIns: [] };
 }
 
 function openDb() {
@@ -59,6 +62,7 @@ export async function loadState() {
       raw = null;
     }
   }
+  await preserveBeforeV2(raw);
   return normalize(raw);
 }
 
@@ -75,14 +79,16 @@ export async function saveState(state) {
 }
 
 /** Fills defaults and drops anything malformed, so old or imported data can't break the app. */
-export function normalize(raw) {
+export function normalize(raw, now = new Date()) {
   const state = emptyState();
   if (!raw || typeof raw !== 'object') return state;
+  const oldVersion = Math.max(1, Math.round(number(raw.version, 1)));
   state.settings = cleanSettings(raw.settings);
   state.sessions = list(raw.sessions, cleanSession);
   state.cardio = list(raw.cardio, cleanCardio);
   state.customExercises = list(raw.customExercises, cleanCustom);
   state.checkIns = list(raw.checkIns, cleanCheckIn);
+  if (oldVersion < 2) migrateV2(state, now);
   return state;
 }
 
@@ -122,6 +128,7 @@ function cleanSession(raw) {
         id: text(e.id) || uid(),
         exerciseId: e.exerciseId,
         name: text(e.name, e.exerciseId),
+        unit: e.unit === 'lb' || e.unit === 'kg' ? e.unit : null,
         targetSets: Math.max(0, Math.round(number(e.targetSets, 0))),
         sets: list(e.sets, (s) => (s
           ? {
@@ -136,6 +143,23 @@ function cleanSession(raw) {
       }
       : null)),
   };
+}
+
+/** Version 2 adds per-exercise units. Preserve the stored kg values and only change how the
+ * requested cable curl is displayed. The migration is limited to the workout open/current on
+ * the day the update is first loaded, so historical exercise names remain an accurate record. */
+function migrateV2(state, now) {
+  const today = dayKey(now);
+  for (const session of state.sessions) {
+    if (dayKey(new Date(session.date)) !== today) continue;
+    for (const entry of session.entries) {
+      const cableBicepCurl = entry.exerciseId === 'cable_curl'
+        || (/cable/i.test(entry.name) && /(?:bicep|curl)/i.test(entry.name));
+      if (!cableBicepCurl) continue;
+      entry.name = 'Single-arm Cable Bicep Curl';
+      entry.unit = 'lb';
+    }
+  }
 }
 
 function cleanCardio(raw) {
@@ -184,6 +208,44 @@ function cleanCheckIn(raw) {
 
 export function backupJSON(state) {
   return JSON.stringify({ app: 'GymTrack', exportedAt: new Date().toISOString(), ...state }, null, 2);
+}
+
+/** Returns the automatic snapshot made before the v2 data migration, when one exists. */
+export async function safetyBackupJSON() {
+  try {
+    const saved = await idb('readonly', (store) => store.get(SAFETY_BACKUP_KEY));
+    if (typeof saved === 'string') return saved;
+  } catch {
+    // Try the storage fallback below.
+  }
+  try {
+    return localStorage.getItem(SAFETY_FALLBACK_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** One-time, immutable copy of the raw state. This runs before normalize/migrate touches it. */
+async function preserveBeforeV2(raw) {
+  if (!raw || typeof raw !== 'object' || number(raw.version, 1) >= 2) return;
+  const json = JSON.stringify({
+    app: 'GymTrack',
+    exportedAt: new Date().toISOString(),
+    reason: 'Automatic backup before per-exercise units update',
+    ...raw,
+  }, null, 2);
+  try {
+    const existing = await idb('readonly', (store) => store.get(SAFETY_BACKUP_KEY));
+    if (!existing) await idb('readwrite', (store) => store.put(json, SAFETY_BACKUP_KEY));
+    return;
+  } catch {
+    // IndexedDB may be unavailable in private browsing.
+  }
+  try {
+    if (!localStorage.getItem(SAFETY_FALLBACK_KEY)) localStorage.setItem(SAFETY_FALLBACK_KEY, json);
+  } catch {
+    // The main state remains untouched even if no secondary storage is available.
+  }
 }
 
 /** Adds items that aren't here yet (matched by id, check-ins by day). Returns how many. */

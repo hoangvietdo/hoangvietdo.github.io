@@ -9,7 +9,13 @@ import { uid } from './store.js';
 const HISTORY_WINDOW = 180 * 86400e3;
 
 export const catalogFor = (state) => new Catalog(state.customExercises);
-export const toWorkout = (session) => ({ date: new Date(session.date), exercises: session.entries });
+export const toWorkout = (session) => ({
+  id: session.id,
+  title: session.title,
+  date: new Date(session.date),
+  endDate: session.endDate ? new Date(session.endDate) : null,
+  exercises: session.entries,
+});
 export const toCardio = (entry) => ({ ...entry, date: new Date(entry.date) });
 export const workingSets = (session) => session.entries.reduce((n, e) => n + e.sets.filter(isWorking).length, 0);
 export const plannedSets = (session) => session.entries.reduce((n, e) => n + e.sets.filter((s) => !s.warmup).length, 0);
@@ -47,7 +53,7 @@ export function createSession(state, { title = 'Workout', date = new Date(), end
 }
 
 export function addEntry(session, exercise, targetSets = 0) {
-  const entry = { id: uid(), exerciseId: exercise.id, name: exercise.name, targetSets, sets: [] };
+  const entry = { id: uid(), exerciseId: exercise.id, name: exercise.name, unit: exercise.defaultUnit ?? null, targetSets, sets: [] };
   session.entries.push(entry);
   return entry;
 }

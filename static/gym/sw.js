@@ -2,7 +2,7 @@
 // Bump VERSION whenever any file changes; the new version activates the next time the
 // app is opened fresh.
 
-const VERSION = 'gymtrack-v2';
+const VERSION = 'gymtrack-v3';
 const FILES = [
   './',
   './index.html',
@@ -35,6 +35,7 @@ const FILES = [
   './js/engine/recovery.js',
   './js/engine/sets.js',
   './js/engine/settings.js',
+  './js/engine/workout-analysis.js',
 ];
 
 self.addEventListener('install', (event) => {

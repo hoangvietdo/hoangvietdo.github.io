@@ -13,8 +13,8 @@ export const EQUIPMENT = {
 
 export const CUSTOM_PREFIX = 'custom.';
 
-function ex(id, name, primary, secondary, equipment, [repLow, repHigh], isTimed = false) {
-  return { id, name, primary, secondary, equipment, repLow, repHigh, isTimed };
+function ex(id, name, primary, secondary, equipment, [repLow, repHigh], isTimed = false, defaultUnit = null) {
+  return { id, name, primary, secondary, equipment, repLow, repHigh, isTimed, defaultUnit };
 }
 
 export const LIBRARY = [
@@ -55,7 +55,7 @@ export const LIBRARY = [
   ex('hammer_curl', 'Hammer Curl', ['biceps'], ['forearms'], 'dumbbell', [8, 12]),
   ex('incline_dumbbell_curl', 'Incline Dumbbell Curl', ['biceps'], [], 'dumbbell', [8, 12]),
   ex('preacher_curl', 'Preacher Curl', ['biceps'], [], 'machine', [8, 12]),
-  ex('cable_curl', 'Cable Curl', ['biceps'], [], 'cable', [10, 15]),
+  ex('cable_curl', 'Single-arm Cable Bicep Curl', ['biceps'], [], 'cable', [10, 15], false, 'lb'),
 
   // Triceps
   ex('triceps_pushdown', 'Triceps Pushdown', ['triceps'], [], 'cable', [10, 15]),

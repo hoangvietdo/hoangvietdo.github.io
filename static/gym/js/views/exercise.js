@@ -9,16 +9,16 @@ import * as fmt from '../format.js';
 import { addSet, removeById, toggleDone } from '../model.js';
 
 /** What to lift, from the sessions before `before`. */
-export function previousHint(ctx, exercise, history, before) {
+export function previousHint(ctx, exercise, history, before, unit = ctx.state.settings.unit) {
   if (!exercise) return null;
-  return progressionHint(exercise, history, { before, incrementKg: loadIncrementKg(ctx.state.settings, exercise.equipment) });
+  return progressionHint(exercise, history, { before, incrementKg: loadIncrementKg({ ...ctx.state.settings, unit }, exercise.equipment) });
 }
 
 /** The call for next time, from the sets ticked off in this workout. */
-export function nextHint(ctx, exercise, entry, date) {
+export function nextHint(ctx, exercise, entry, date, unit = entry.unit ?? exercise?.defaultUnit ?? ctx.state.settings.unit) {
   const done = entry.sets.filter(isWorking);
   if (!exercise || !done.length) return null;
-  return hintFromSets(exercise, done, date, loadIncrementKg(ctx.state.settings, exercise.equipment));
+  return hintFromSets(exercise, done, date, loadIncrementKg({ ...ctx.state.settings, unit }, exercise.equipment));
 }
 
 export function adviceBox(hint, exercise, unit, { prefix = '', showLast = true } = {}) {
@@ -39,11 +39,11 @@ export function newExerciseNote(exercise) {
 
 /** Editable card for one exercise of `session`. */
 export function exerciseLogger(ctx, session, entry, { exercise, history, onRemove }) {
-  const unit = ctx.state.settings.unit;
+  const unit = entry.unit ?? exercise?.defaultUnit ?? ctx.state.settings.unit;
   const timed = exercise?.isTimed ?? false;
   const date = new Date(session.date);
-  const before = previousHint(ctx, exercise, history, date);
-  const after = nextHint(ctx, exercise, entry, date);
+  const before = previousHint(ctx, exercise, history, date, unit);
+  const after = nextHint(ctx, exercise, entry, date, unit);
   const done = entry.sets.filter(isWorking).length;
   const live = !session.endDate;
   let number = 0;
@@ -53,8 +53,14 @@ export function exerciseLogger(ctx, session, entry, { exercise, history, onRemov
       entry.targetSets > 0 && h('span', { class: `pill${done >= entry.targetSets ? ' done' : ''}` }, `${done}/${entry.targetSets} sets`),
       h('button', { class: 'icon-btn', 'aria-label': `Remove ${entry.name}`, onClick: onRemove }, icon('trash', 18))),
     before ? adviceBox(before, exercise, unit, { prefix: 'Today: ' }) : exercise && newExerciseNote(exercise),
-    entry.sets.length > 0 && h('div', { class: 'set-row set-head', 'aria-hidden': 'true' },
-      h('span', {}, 'Set'), h('span', {}, unit), h('span', {}), h('span', {}, timed ? 'Sec' : 'Reps'), h('span', {}, 'Fail'), h('span', {}, 'Done')),
+    entry.sets.length > 0 && h('div', { class: 'set-row set-head' },
+      h('span', { 'aria-hidden': 'true' }, 'Set'),
+      select({
+        className: 'set-unit', value: unit, options: [['kg', 'kg'], ['lb', 'lb']], label: `Weight unit for ${entry.name}`,
+        onChange: (value) => ctx.update(() => { entry.unit = value; }),
+      }),
+      h('span', {}), h('span', { 'aria-hidden': 'true' }, timed ? 'Sec' : 'Reps'),
+      h('span', { 'aria-hidden': 'true' }, 'Fail'), h('span', { 'aria-hidden': 'true' }, 'Done')),
     entry.sets.map((set) => setRow(ctx, entry, set, set.warmup ? 'W' : String(++number), unit)),
     h('button', {
       class: 'row row-button accent add-set',
