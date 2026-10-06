@@ -179,7 +179,7 @@ function summary(ctx, session) {
             h('span', { class: 'row-title grow' }, entry.name),
             h('span', { class: 'small muted' }, `${done.length} sets`)),
           h('div', { class: 'small muted done-sets' }, fmt.setList(done, unit, exercise?.isTimed)
-            + (exercise?.equipment === 'barbell' ? ' · plates only' : '')
+            + (['barbell', 'smith'].includes(exercise?.equipment) ? ' · plates only' : '')
             + (done.some((s) => s.rir === 0) ? ' · last rep failure' : '')),
           next && adviceBox(next, exercise, unit, { prefix: 'Next time: ', showLast: false }));
       }),
@@ -239,7 +239,7 @@ function workoutAnalysis(analysis, calls, unit) {
       h('li', {}, progression),
       h('li', {}, density),
       relativeVolume && h('li', {}, relativeVolume))),
-  'Volume is weight × reps for loaded exercises. For barbell exercises, volume includes the bar weight configured in Settings; logged weights remain plates only. Muscle sets include half credit for supporting muscles.');
+  'Volume is weight × reps for loaded exercises. Barbell and Smith volume include their separate starting weights from Settings; logged weights remain plates only. Muscle sets include half credit for supporting muscles.');
 }
 
 function analysisStat(label, value) {

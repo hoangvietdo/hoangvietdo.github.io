@@ -29,7 +29,7 @@ export function adviceBox(hint, exercise, unit, { prefix = '', showLast = true }
       h('span', { class: 'advice-text' }, ` · ${call.text}`)),
     h('div', { class: 'advice-why' }, fmt.adviceReason(hint, exercise)),
     showLast && h('div', { class: 'advice-last' }, fmt.lastTime(hint, unit, exercise.isTimed)),
-    exercise.equipment === 'barbell' && h('div', { class: 'advice-last' }, 'Plate weight only; bar excluded.'));
+    isPlateLoaded(exercise) && h('div', { class: 'advice-last' }, `Plate weight only; ${exercise.equipment === 'smith' ? 'Smith starting weight' : 'bar'} excluded.`));
 }
 
 export function newExerciseNote(exercise) {
@@ -42,7 +42,7 @@ export function newExerciseNote(exercise) {
 export function exerciseLogger(ctx, session, entry, { exercise, history, onRemove }) {
   const unit = entry.unit ?? exercise?.defaultUnit ?? ctx.state.settings.unit;
   const timed = exercise?.isTimed ?? false;
-  const platesOnly = exercise?.equipment === 'barbell';
+  const platesOnly = isPlateLoaded(exercise);
   const date = new Date(session.date);
   const before = previousHint(ctx, exercise, history, date, unit);
   const after = nextHint(ctx, exercise, entry, date, unit);
@@ -70,6 +70,10 @@ export function exerciseLogger(ctx, session, entry, { exercise, history, onRemov
       onClick: () => ctx.update(() => addSet(entry, before, exercise, { done: !live })),
     }, icon('plus', 18), h('span', { class: 'grow' }, 'Add set')),
     after && adviceBox(after, exercise, unit, { prefix: 'Next time: ', showLast: false }));
+}
+
+function isPlateLoaded(exercise) {
+  return exercise?.equipment === 'barbell' || exercise?.equipment === 'smith';
 }
 
 function setRow(ctx, entry, set, label, unit, platesOnly) {

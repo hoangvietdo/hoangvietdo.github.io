@@ -6,7 +6,7 @@ import { backupJSON, finishBackupJSON, safetyBackupJSON, mergeBackup, sampleData
 import { isInstalled } from './today.js';
 import * as fmt from '../format.js';
 
-export const VERSION = '1.3';
+export const VERSION = '1.4';
 
 export function renderSettings(ctx) {
   const s = ctx.state.settings;
@@ -23,11 +23,13 @@ export function renderSettings(ctx) {
         select({ value: s.split, options: Object.entries(SPLITS), label: 'Training split', onChange: (v) => change((x) => { x.split = v; }) })),
       profileNumber('Barbell weight', fmt.inputWeight(s.barbellWeightKg, s.unit), s.unit, true,
         (value) => mutate((x) => { x.barbellWeightKg = value > 0 ? fmt.toKg(value, s.unit) : 20; })),
+      profileNumber('Smith starting weight', s.smithBarWeightKg > 0 ? fmt.inputWeight(s.smithBarWeightKg, s.unit) : '0', s.unit, true,
+        (value) => mutate((x) => { x.smithBarWeightKg = value > 0 ? fmt.toKg(value, s.unit) : 0; })),
       linkRow('Weekly set targets', () => ctx.go('#/settings/targets')),
       h('label', { class: 'row field' },
         h('span', { class: 'label grow' }, 'Week starts on Monday'),
         toggle({ checked: s.weekStartsMonday, label: 'Week starts on Monday', onChange: (v) => change((x) => { x.weekStartsMonday = v; }) }))),
-    'Automatic chooses a session from what is recovered. For barbell exercises, enter the total plate weight on both sides without the bar; the configured bar weight is added only to workout volume.'),
+    'For barbell and Smith exercises, enter the total plates on both sides without the bar. Their separate configured starting weights are added only to workout volume. Smith machines vary, so its default is 0.'),
     section('You', card(
       h('div', { class: 'row field' },
         h('span', { class: 'label grow' }, 'Age'),
@@ -221,6 +223,6 @@ export function renderAbout(ctx) {
     block('Can I skip today?',
       'Compares your weekly session goal with the days left this week. If skipping still leaves room to hit the goal, it says so, even when training today would be better because your muscles are ready.'),
     block('Progression',
-      'Double progression: when every set at your top weight reaches the top of the rep range, go up by the smallest step (2.5 kg on barbells, 2 kg on dumbbells, 5 lb if you use pounds). Otherwise add a rep. Estimated 1-rep max uses the Epley formula.'),
+      'Double progression: when every set at your top weight reaches the top of the rep range, go up by the smallest step (2.5 kg on barbells and Smith machines, 2 kg on dumbbells, 5 lb if you use pounds). Otherwise add a rep. Estimated 1-rep max uses the Epley formula.'),
     h('p', { class: 'version' }, 'These are evidence-based rules of thumb, not medical advice. Pain, illness or unusual fatigue matter more than any number here.'));
 }

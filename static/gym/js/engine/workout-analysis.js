@@ -4,7 +4,9 @@
 import { effectiveSets } from './recovery.js';
 import { isWorking } from './sets.js';
 
-export function analyzeWorkout(workout, catalog, { bodyWeightKg = null, heightCm = null, barbellWeightKg = 0 } = {}) {
+export function analyzeWorkout(workout, catalog, {
+  bodyWeightKg = null, heightCm = null, barbellWeightKg = 0, smithBarWeightKg = 0,
+} = {}) {
   const entries = workout.exercises.map((entry) => ({ entry, exercise: catalog.get(entry.exerciseId), sets: entry.sets.filter(isWorking) }));
   const sets = entries.flatMap(({ sets: working }) => working);
   const muscleSets = effectiveSets(workout, catalog);
@@ -16,7 +18,9 @@ export function analyzeWorkout(workout, catalog, { bodyWeightKg = null, heightCm
 
   const totalReps = sets.reduce((sum, set) => sum + set.reps, 0);
   const volumeKg = entries.reduce((total, { exercise, sets: working }) => total + working.reduce((sum, set) => {
-    const bar = exercise?.equipment === 'barbell' ? Math.max(0, barbellWeightKg) : 0;
+    const bar = exercise?.equipment === 'barbell'
+      ? Math.max(0, barbellWeightKg)
+      : exercise?.equipment === 'smith' ? Math.max(0, smithBarWeightKg) : 0;
     return sum + (set.weightKg + bar) * set.reps;
   }, 0), 0);
   const durationMinutes = Number.isFinite(start) && Number.isFinite(end) && end >= start

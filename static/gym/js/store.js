@@ -115,6 +115,7 @@ function cleanSettings(raw = {}) {
     bodyWeightKg: boundedOptional(raw.bodyWeightKg, 25, 400),
     heightCm: boundedOptional(raw.heightCm, 100, 250),
     barbellWeightKg: Math.min(35, Math.max(5, number(raw.barbellWeightKg, base.barbellWeightKg))),
+    smithBarWeightKg: Math.min(50, Math.max(0, number(raw.smithBarWeightKg, base.smithBarWeightKg))),
     weekStartsMonday: raw.weekStartsMonday !== false,
     targets,
   };

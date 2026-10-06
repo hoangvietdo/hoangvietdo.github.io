@@ -19,6 +19,7 @@ export function makeSettings(partial = {}) {
     bodyWeightKg: null,
     heightCm: null,
     barbellWeightKg: 20,
+    smithBarWeightKg: 0,
     weekStartsMonday: true,
     ...partial,
     targets: { ...defaultTargets(), ...(partial.targets ?? {}) },

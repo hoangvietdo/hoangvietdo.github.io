@@ -4,6 +4,7 @@
 
 export const EQUIPMENT = {
   barbell: { name: 'Barbell', incrementKg: 2.5 },
+  smith: { name: 'Smith machine', incrementKg: 2.5 },
   dumbbell: { name: 'Dumbbell', incrementKg: 2 },
   machine: { name: 'Machine', incrementKg: 5 },
   cable: { name: 'Cable', incrementKg: 2.5 },
@@ -24,6 +25,8 @@ export const LIBRARY = [
   ex('dumbbell_bench_press', 'Dumbbell Bench Press', ['chest'], ['triceps', 'shoulders'], 'dumbbell', [8, 12]),
   ex('incline_barbell_bench_press', 'Incline Barbell Bench Press', ['chest'], ['shoulders', 'triceps'], 'barbell', [6, 10]),
   ex('machine_chest_press', 'Machine Chest Press', ['chest'], ['triceps', 'shoulders'], 'machine', [8, 12]),
+  ex('smith_bench_press', 'Smith Machine Bench Press', ['chest'], ['triceps', 'shoulders'], 'smith', [6, 10]),
+  ex('smith_incline_bench_press', 'Smith Machine Incline Bench Press', ['chest'], ['shoulders', 'triceps'], 'smith', [8, 12]),
   ex('cable_fly', 'Cable Fly', ['chest'], [], 'cable', [10, 15]),
   ex('pec_deck', 'Pec Deck', ['chest'], [], 'machine', [10, 15]),
   ex('dip', 'Dip', ['chest', 'triceps'], ['shoulders'], 'bodyweight', [6, 12]),
@@ -36,6 +39,7 @@ export const LIBRARY = [
   ex('barbell_row', 'Barbell Row', ['back'], ['biceps', 'lowerBack'], 'barbell', [6, 10]),
   ex('dumbbell_row', 'One-arm Dumbbell Row', ['back'], ['biceps'], 'dumbbell', [8, 12]),
   ex('chest_supported_row', 'Chest-supported Row', ['back'], ['biceps'], 'machine', [8, 12]),
+  ex('smith_bent_over_row', 'Smith Machine Bent-over Row', ['back'], ['biceps', 'lowerBack'], 'smith', [8, 12]),
   ex('chin_up', 'Chin-up', ['back', 'biceps'], [], 'bodyweight', [5, 10]),
   ex('straight_arm_pulldown', 'Straight-arm Pulldown', ['back'], [], 'cable', [10, 15]),
   ex('shrug', 'Shrug', ['back'], ['forearms'], 'dumbbell', [10, 15]),
@@ -48,6 +52,7 @@ export const LIBRARY = [
   ex('rear_delt_fly', 'Rear Delt Fly', ['shoulders'], ['back'], 'machine', [12, 20]),
   ex('face_pull', 'Face Pull', ['shoulders'], ['back'], 'cable', [12, 20]),
   ex('machine_shoulder_press', 'Machine Shoulder Press', ['shoulders'], ['triceps'], 'machine', [8, 12]),
+  ex('smith_shoulder_press', 'Smith Machine Shoulder Press', ['shoulders'], ['triceps'], 'smith', [8, 12]),
 
   // Biceps
   ex('barbell_curl', 'Barbell Curl', ['biceps'], ['forearms'], 'barbell', [8, 12]),
@@ -62,6 +67,7 @@ export const LIBRARY = [
   ex('overhead_triceps_extension', 'Overhead Triceps Extension', ['triceps'], [], 'cable', [10, 15]),
   ex('skull_crusher', 'Skull Crusher', ['triceps'], [], 'barbell', [8, 12]),
   ex('close_grip_bench_press', 'Close-grip Bench Press', ['triceps'], ['chest', 'shoulders'], 'barbell', [6, 10]),
+  ex('smith_close_grip_bench_press', 'Smith Machine Close-grip Bench Press', ['triceps'], ['chest', 'shoulders'], 'smith', [8, 12]),
 
   // Forearms
   ex('wrist_curl', 'Wrist Curl', ['forearms'], [], 'dumbbell', [12, 20]),
@@ -70,18 +76,23 @@ export const LIBRARY = [
   ex('back_squat', 'Back Squat', ['quads'], ['glutes', 'lowerBack'], 'barbell', [5, 8]),
   ex('leg_press', 'Leg Press', ['quads'], ['glutes'], 'machine', [8, 12]),
   ex('hack_squat', 'Hack Squat', ['quads'], ['glutes'], 'machine', [8, 12]),
+  ex('smith_squat', 'Smith Machine Squat', ['quads'], ['glutes'], 'smith', [6, 10]),
   ex('front_squat', 'Front Squat', ['quads'], ['glutes'], 'barbell', [5, 8]),
   ex('leg_extension', 'Leg Extension', ['quads'], [], 'machine', [10, 15]),
   ex('romanian_deadlift', 'Romanian Deadlift', ['hamstrings'], ['glutes', 'lowerBack'], 'barbell', [6, 10]),
+  ex('smith_romanian_deadlift', 'Smith Machine Romanian Deadlift', ['hamstrings'], ['glutes', 'lowerBack'], 'smith', [8, 12]),
   ex('seated_leg_curl', 'Seated Leg Curl', ['hamstrings'], [], 'machine', [10, 15]),
   ex('lying_leg_curl', 'Lying Leg Curl', ['hamstrings'], [], 'machine', [10, 15]),
   ex('hip_thrust', 'Hip Thrust', ['glutes'], ['hamstrings'], 'barbell', [8, 12]),
+  ex('smith_hip_thrust', 'Smith Machine Hip Thrust', ['glutes'], ['hamstrings'], 'smith', [8, 12]),
   ex('bulgarian_split_squat', 'Bulgarian Split Squat', ['quads', 'glutes'], [], 'dumbbell', [8, 12]),
+  ex('smith_bulgarian_split_squat', 'Smith Machine Bulgarian Split Squat', ['quads', 'glutes'], [], 'smith', [8, 12]),
   ex('walking_lunge', 'Walking Lunge', ['quads'], ['glutes'], 'dumbbell', [10, 16]),
   ex('hip_abduction', 'Hip Abduction', ['glutes'], [], 'machine', [12, 20]),
   ex('deadlift', 'Deadlift', ['glutes', 'lowerBack'], ['hamstrings', 'quads', 'back', 'forearms'], 'barbell', [3, 6]),
   ex('back_extension', 'Back Extension', ['lowerBack'], ['glutes', 'hamstrings'], 'bodyweight', [10, 15]),
   ex('standing_calf_raise', 'Standing Calf Raise', ['calves'], [], 'machine', [10, 15]),
+  ex('smith_calf_raise', 'Smith Machine Calf Raise', ['calves'], [], 'smith', [10, 15]),
   ex('seated_calf_raise', 'Seated Calf Raise', ['calves'], [], 'machine', [12, 20]),
 
   // Abs
