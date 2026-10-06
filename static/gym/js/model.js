@@ -88,8 +88,17 @@ export function addSet(entry, hint, exercise, { done = true } = {}) {
 
 /** Ticks a set off (or back on). A ticked weight carries over to the sets still to do. */
 export function toggleDone(entry, set) {
-  set.done = set.done === false;
-  if (!set.done) return;
+  const alreadyDoneWithoutFailure = set.done !== false && set.rir !== 0;
+  if (alreadyDoneWithoutFailure) {
+    set.done = false;
+    return;
+  }
+  set.rir = null;
+  completeSet(entry, set);
+}
+
+function completeSet(entry, set) {
+  set.done = true;
   for (const later of entry.sets.slice(entry.sets.indexOf(set) + 1)) {
     if (later.done === false && !later.warmup) later.weightKg = set.weightKg;
   }
@@ -100,7 +109,7 @@ export function toggleDone(entry, set) {
 export function toggleFailure(entry, set) {
   const wasFailure = set.rir === 0;
   set.rir = wasFailure ? null : 0;
-  if (!wasFailure && set.done === false) toggleDone(entry, set);
+  if (!wasFailure && set.done === false) completeSet(entry, set);
 }
 
 /** Drops sets that were never done. Returns false (and deletes the workout) if nothing was. */

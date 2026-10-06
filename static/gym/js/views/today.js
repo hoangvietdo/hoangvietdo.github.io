@@ -132,7 +132,7 @@ function liveWorkout(ctx, session) {
       h('div', { class: 'live-actions' },
         h('button', { class: 'btn primary', onClick: () => finish(ctx, session) }, 'Finish workout'),
         h('button', { class: 'btn tinted', onClick: () => ctx.go(`#/workout/${session.id}`) }, 'Notes & details'))),
-    h('p', { class: 'section-footer tip' }, 'Change the weight or reps if they differ. Tap Failure if you could not do another rep—it also ticks the set complete. Otherwise tap ✓. Tap a set number to mark a warm-up or delete it.'),
+    h('p', { class: 'section-footer tip' }, 'Change the weight or reps if they differ. Tap Last rep → Failure to save a set whose final rep failed (0 reps left). Tap ✓ Done when you completed it without failure. Tap a set number to mark a warm-up or delete it.'),
     session.entries.map((entry) => exerciseLogger(ctx, session, entry, {
       exercise: catalog.get(entry.exerciseId),
       history,
@@ -175,7 +175,7 @@ function summary(ctx, session) {
           h('div', { class: 'plan-line' },
             h('span', { class: 'row-title grow' }, entry.name),
             h('span', { class: 'small muted' }, `${done.length} sets`)),
-          h('div', { class: 'small muted done-sets' }, fmt.setList(done, unit, exercise?.isTimed) + (done.some((s) => s.rir === 0) ? ' · to failure' : '')),
+          h('div', { class: 'small muted done-sets' }, fmt.setList(done, unit, exercise?.isTimed) + (done.some((s) => s.rir === 0) ? ' · last rep failure' : '')),
           next && adviceBox(next, exercise, unit, { prefix: 'Next time: ', showLast: false }));
       }),
       h('button', { class: 'row row-button accent', onClick: () => ctx.go(`#/workout/${session.id}`) },
