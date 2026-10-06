@@ -3,7 +3,7 @@ import { MUSCLES, muscleName } from '../engine/muscles.js';
 import { EQUIPMENT, CUSTOM_PREFIX, defaultRepRange, exerciseMuscles } from '../engine/exercises.js';
 import * as fmt from '../format.js';
 import { catalogFor, toWorkout, addEntry, finishSession, removeById } from '../model.js';
-import { uid } from '../store.js';
+import { saveFinishBackup, uid } from '../store.js';
 import { exerciseLogger, previousHint } from './exercise.js';
 
 /** Full editor for a workout: name, start time, notes and every set. Opened from History
@@ -60,10 +60,12 @@ function close(ctx, session) {
   ctx.back();
 }
 
-function finish(ctx, session) {
+async function finish(ctx, session) {
   if (!session.entries.some((e) => e.sets.some((s) => s.done !== false && !s.warmup && s.reps > 0))) {
     if (session.entries.length && !confirm('No sets are ticked off yet. Delete this workout?')) return;
   }
+  const saved = await saveFinishBackup(ctx.state, session);
+  ctx.ui.lastFinishBackup = saved ? session.id : null;
   ctx.mutate((s) => finishSession(s, session));
   ctx.back();
 }

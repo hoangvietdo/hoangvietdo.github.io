@@ -1,4 +1,5 @@
 import { h, icon, svg, section, card, select } from '../dom.js';
+import { saveFinishBackup } from '../store.js';
 import { muscleName } from '../engine/muscles.js';
 import { FEELINGS } from '../engine/readiness.js';
 import { analyzeWorkout } from '../engine/workout-analysis.js';
@@ -148,8 +149,10 @@ function liveWorkout(ctx, session) {
   ];
 }
 
-function finish(ctx, session) {
+async function finish(ctx, session) {
   if (workingSets(session) === 0 && !confirm('No sets are ticked off yet. Discard this workout?')) return;
+  const saved = await saveFinishBackup(ctx.state, session);
+  ctx.ui.lastFinishBackup = saved ? session.id : null;
   ctx.update((state) => finishSession(state, session));
   window.scrollTo(0, 0);
 }
@@ -161,7 +164,7 @@ function summary(ctx, session) {
   const fallbackUnit = ctx.state.settings.unit;
   const date = new Date(session.date);
   const workout = toWorkout(session);
-  const analysis = analyzeWorkout(workout, catalog);
+  const analysis = analyzeWorkout(workout, catalog, ctx.state.settings);
   const calls = [];
   const recap = section(`Today’s workout · ${session.title || 'Workout'}`,
     card(
@@ -175,12 +178,16 @@ function summary(ctx, session) {
           h('div', { class: 'plan-line' },
             h('span', { class: 'row-title grow' }, entry.name),
             h('span', { class: 'small muted' }, `${done.length} sets`)),
-          h('div', { class: 'small muted done-sets' }, fmt.setList(done, unit, exercise?.isTimed) + (done.some((s) => s.rir === 0) ? ' · last rep failure' : '')),
+          h('div', { class: 'small muted done-sets' }, fmt.setList(done, unit, exercise?.isTimed)
+            + (exercise?.equipment === 'barbell' ? ' · plates only' : '')
+            + (done.some((s) => s.rir === 0) ? ' · last rep failure' : '')),
           next && adviceBox(next, exercise, unit, { prefix: 'Next time: ', showLast: false }));
       }),
       h('button', { class: 'row row-button accent', onClick: () => ctx.go(`#/workout/${session.id}`) },
         h('span', { class: 'grow' }, 'Edit this workout'), icon('chevron', 18))),
-    'These calls are also shown on the exercise the next time it comes up.');
+    ctx.ui.lastFinishBackup === session.id
+      ? 'Recovery backup saved before finishing. These calls are also shown the next time each exercise comes up.'
+      : 'These calls are also shown on the exercise the next time it comes up.');
   return [recap, workoutAnalysis(analysis, calls, fallbackUnit)];
 }
 
@@ -201,16 +208,38 @@ function workoutAnalysis(analysis, calls, unit) {
     : decreases
       ? `${decreases} ${decreases === 1 ? 'exercise needs' : 'exercises need'} a lighter load next time.`
       : 'Keep the load and build reps on the next session.';
+  const density = analysis.volumePerMinuteKg && analysis.volumeKg > 0
+    ? `Session density averaged ${fmt.num(fmt.fromKg(analysis.volumePerMinuteKg, unit), 1)} ${unit} per minute and ${fmt.num(analysis.averageReps, 1)} reps per working set.`
+    : `You averaged ${fmt.num(analysis.averageReps, 1)} reps per working set.`;
+  const relativeVolume = analysis.volumeBodyweightRatio
+    ? `Recorded load volume equalled ${fmt.num(analysis.volumeBodyweightRatio, 1)} times your current body weight across ${analysis.totalReps} reps.`
+    : null;
+  const profile = analysis.bodyWeightKg || analysis.heightCm
+    ? [
+      analysis.bodyWeightKg && fmt.weight(analysis.bodyWeightKg, unit),
+      analysis.heightCm && (unit === 'lb' ? `${fmt.num(analysis.heightCm / 2.54, 1)} in` : `${fmt.num(analysis.heightCm, 0)} cm`),
+      analysis.bmi && `BMI ${fmt.num(analysis.bmi, 1)}`,
+    ].filter(Boolean).join(' · ')
+    : null;
 
-  return section('Workout analysis', card(
+  return section('Deep workout analysis', card(
     h('div', { class: 'analysis-stats' },
       analysisStat('Working sets', analysis.workingSets),
       analysisStat('Exercises', analysis.exercises),
+      analysisStat('Total reps', analysis.totalReps),
       analysis.durationMinutes != null && analysisStat('Duration', `${analysis.durationMinutes} min`),
       analysis.volumeKg > 0 && analysisStat('Recorded volume', `${fmt.num(fmt.fromKg(analysis.volumeKg, unit), 0)} ${unit}`)),
+    profile && h('div', { class: 'analysis-profile' },
+      h('div', { class: 'eyebrow' }, 'Body profile'),
+      h('div', {}, profile),
+      analysis.bmi && h('div', { class: 'small muted' }, 'BMI is a rough screening number and does not distinguish muscle from body fat.')),
     focus && h('div', { class: 'analysis-focus' }, h('div', { class: 'eyebrow' }, 'Muscle focus'), h('div', {}, focus)),
-    h('ul', { class: 'analysis-notes' }, h('li', {}, effort), h('li', {}, progression))),
-  'Volume is weight × reps for loaded exercises. Muscle sets include half credit for supporting muscles.');
+    h('ul', { class: 'analysis-notes' },
+      h('li', {}, effort),
+      h('li', {}, progression),
+      h('li', {}, density),
+      relativeVolume && h('li', {}, relativeVolume))),
+  'Volume is weight × reps for loaded exercises. For barbell exercises, volume includes the bar weight configured in Settings; logged weights remain plates only. Muscle sets include half credit for supporting muscles.');
 }
 
 function analysisStat(label, value) {

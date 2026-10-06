@@ -12,7 +12,7 @@ const TABS = [['today', 'Today'], ['history', 'History'], ['progress', 'Progress
 
 const app = {
   state: null,
-  ui: { progressTab: 'muscles', progressMuscle: 'chest', progressExercise: null, picker: null, cardioDraft: null },
+  ui: { progressTab: 'muscles', progressMuscle: 'chest', progressExercise: null, picker: null, cardioDraft: null, lastFinishBackup: null },
   ticker: null,
   lastTab: 'today',
   lastScreen: null,

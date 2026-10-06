@@ -1,15 +1,17 @@
-import { h, icon, section, card, navBar, select, stepper, toggle, segmented } from '../dom.js';
+import { h, icon, section, card, navBar, numberInput, select, stepper, toggle, segmented } from '../dom.js';
 import { MUSCLES, muscleName, defaultTargets } from '../engine/muscles.js';
 import { SPLITS } from '../engine/settings.js';
 import { dayKey } from '../engine/calendar.js';
-import { backupJSON, safetyBackupJSON, mergeBackup, sampleData, emptyState } from '../store.js';
+import { backupJSON, finishBackupJSON, safetyBackupJSON, mergeBackup, sampleData, emptyState } from '../store.js';
 import { isInstalled } from './today.js';
+import * as fmt from '../format.js';
 
-export const VERSION = '1.1';
+export const VERSION = '1.3';
 
 export function renderSettings(ctx) {
   const s = ctx.state.settings;
   const change = (apply) => ctx.update((state) => apply(state.settings));
+  const mutate = (apply) => ctx.mutate((state) => apply(state.settings));
   return h('main', { class: 'screen' },
     h('header', { class: 'page-head' }, h('h1', {}, 'Settings')),
     section('Training', card(
@@ -19,21 +21,29 @@ export function renderSettings(ctx) {
       h('label', { class: 'row field' },
         h('span', { class: 'label grow' }, 'Training split'),
         select({ value: s.split, options: Object.entries(SPLITS), label: 'Training split', onChange: (v) => change((x) => { x.split = v; }) })),
+      profileNumber('Barbell weight', fmt.inputWeight(s.barbellWeightKg, s.unit), s.unit, true,
+        (value) => mutate((x) => { x.barbellWeightKg = value > 0 ? fmt.toKg(value, s.unit) : 20; })),
       linkRow('Weekly set targets', () => ctx.go('#/settings/targets')),
       h('label', { class: 'row field' },
         h('span', { class: 'label grow' }, 'Week starts on Monday'),
         toggle({ checked: s.weekStartsMonday, label: 'Week starts on Monday', onChange: (v) => change((x) => { x.weekStartsMonday = v; }) }))),
-    'Automatic picks full body, upper body, push, pull or legs depending on what’s recovered. Pick a split to always plan that style.'),
+    'Automatic chooses a session from what is recovered. For barbell exercises, enter the total plate weight on both sides without the bar; the configured bar weight is added only to workout volume.'),
     section('You', card(
       h('div', { class: 'row field' },
         h('span', { class: 'label grow' }, 'Age'),
         stepper({ value: s.age, min: 14, max: 90, label: 'age', onChange: (v) => change((x) => { x.age = v; }) })),
       h('div', { class: 'row field' },
         h('span', { class: 'label grow' }, 'Weight unit'),
-        segmented({ value: s.unit, options: [['kg', 'kg'], ['lb', 'lb']], label: 'Weight unit', onChange: (v) => change((x) => { x.unit = v; }) }))),
-    'Age estimates your max heart rate (208 − 0.7 × age), used to judge how hard a run was.'),
+        segmented({ value: s.unit, options: [['kg', 'kg'], ['lb', 'lb']], label: 'Weight unit', onChange: (v) => change((x) => { x.unit = v; }) })),
+      profileNumber('Current weight', s.bodyWeightKg == null ? '' : fmt.inputWeight(s.bodyWeightKg, s.unit), s.unit, true,
+        (value) => mutate((x) => { x.bodyWeightKg = value > 0 ? fmt.toKg(value, s.unit) : null; })),
+      profileNumber('Height', heightFromCm(s.heightCm, s.unit), s.unit === 'lb' ? 'in' : 'cm', true,
+        (value) => mutate((x) => { x.heightCm = value > 0 ? heightToCm(value, s.unit) : null; }))),
+    'Age estimates your max heart rate for cardio. Weight and height add body-relative context to the finished-workout analysis; BMI is shown only as a rough screening number.'),
     section('Your data', card(
       actionRow('Export backup', () => exportBackup(ctx)),
+      actionRow('Export last-finish backup', () => exportFinishBackup()),
+      actionRow('Restore from last-finish backup', () => restoreFinishBackup(ctx)),
       actionRow('Export pre-update safety copy', () => exportSafetyBackup()),
       actionRow('Restore missing data from safety copy', () => restoreSafetyBackup(ctx)),
       importRow(ctx),
@@ -47,6 +57,23 @@ export function renderSettings(ctx) {
         h('li', {}, 'Open GymTrack from the Home Screen. It works offline and keeps its own data.'))))),
     section(null, card(linkRow('How suggestions work', () => ctx.go('#/settings/about')))),
     h('p', { class: 'version' }, `GymTrack ${VERSION} · data stays on this device`));
+}
+
+function profileNumber(label, value, unit, decimal, onInput) {
+  return h('label', { class: 'row field' },
+    h('span', { class: 'label grow' }, label),
+    numberInput({ value, decimal, label: `${label} in ${unit}`, className: 'profile-num', onInput }),
+    h('span', { class: 'small muted profile-unit' }, unit));
+}
+
+function heightFromCm(cm, unit) {
+  if (cm == null) return '';
+  const value = unit === 'lb' ? cm / 2.54 : cm;
+  return Math.round(value * 10) / 10;
+}
+
+function heightToCm(value, unit) {
+  return unit === 'lb' ? value * 2.54 : value;
 }
 
 function linkRow(label, onClick) {
@@ -89,6 +116,27 @@ async function exportSafetyBackup() {
     return;
   }
   await shareOrDownload(json, `gymtrack-before-v1.1-${dayKey(new Date())}.json`, 'GymTrack pre-update safety copy');
+}
+
+async function exportFinishBackup() {
+  const json = await finishBackupJSON();
+  if (!json) {
+    alert('No finished-workout backup exists yet. GymTrack creates one immediately before the next Finish action.');
+    return;
+  }
+  await shareOrDownload(json, `gymtrack-before-last-finish-${dayKey(new Date())}.json`, 'GymTrack last-finish backup');
+}
+
+async function restoreFinishBackup(ctx) {
+  const json = await finishBackupJSON();
+  if (!json) {
+    alert('No finished-workout backup exists yet.');
+    return;
+  }
+  if (!confirm('Restore workouts, exercises or sets missing from the backup saved before the last Finish action? Existing data will not be overwritten.')) return;
+  let added = 0;
+  ctx.update((state) => { added = mergeBackup(state, JSON.parse(json)); });
+  alert(added ? `Restored ${added} missing ${added === 1 ? 'item' : 'items'}.` : 'Nothing is missing from the current data.');
 }
 
 async function restoreSafetyBackup(ctx) {

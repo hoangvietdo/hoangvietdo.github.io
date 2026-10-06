@@ -22,6 +22,8 @@ const FALLBACK_KEY = 'gymtrack-state';
 const CURRENT_VERSION = 2;
 const SAFETY_BACKUP_KEY = 'safety-before-v2';
 const SAFETY_FALLBACK_KEY = 'gymtrack-safety-before-v2';
+const FINISH_BACKUP_KEY = 'latest-finish-backup';
+const FINISH_FALLBACK_KEY = 'gymtrack-latest-finish-backup';
 
 export const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`);
 
@@ -110,9 +112,17 @@ function cleanSettings(raw = {}) {
     split: ['automatic', 'pushPullLegs', 'upperLower', 'fullBody'].includes(raw.split) ? raw.split : base.split,
     age: Math.min(90, Math.max(14, Math.round(number(raw.age, base.age)))),
     unit: raw.unit === 'lb' ? 'lb' : 'kg',
+    bodyWeightKg: boundedOptional(raw.bodyWeightKg, 25, 400),
+    heightCm: boundedOptional(raw.heightCm, 100, 250),
+    barbellWeightKg: Math.min(35, Math.max(5, number(raw.barbellWeightKg, base.barbellWeightKg))),
     weekStartsMonday: raw.weekStartsMonday !== false,
     targets,
   };
+}
+
+function boundedOptional(value, min, max) {
+  const parsed = number(value);
+  return parsed == null || parsed <= 0 ? null : Math.min(max, Math.max(min, parsed));
 }
 
 function cleanSession(raw) {
@@ -225,6 +235,47 @@ export async function safetyBackupJSON() {
   }
 }
 
+/** Full state immediately before the most recent Finish action. Kept outside the main state so
+ * filtering incomplete sets cannot modify the recovery copy. */
+export function finishBackupPayload(state, session) {
+  return JSON.stringify({
+    app: 'GymTrack',
+    exportedAt: new Date().toISOString(),
+    reason: 'Automatic backup before finishing a workout',
+    finishedSessionId: session.id,
+    ...state,
+  }, null, 2);
+}
+
+export async function saveFinishBackup(state, session) {
+  const json = finishBackupPayload(state, session);
+  try {
+    await idb('readwrite', (store) => store.put(json, FINISH_BACKUP_KEY));
+    return true;
+  } catch {
+    try {
+      localStorage.setItem(FINISH_FALLBACK_KEY, json);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+export async function finishBackupJSON() {
+  try {
+    const saved = await idb('readonly', (store) => store.get(FINISH_BACKUP_KEY));
+    if (typeof saved === 'string') return saved;
+  } catch {
+    // Try the storage fallback below.
+  }
+  try {
+    return localStorage.getItem(FINISH_FALLBACK_KEY);
+  } catch {
+    return null;
+  }
+}
+
 /** One-time, immutable copy of the raw state. This runs before normalize/migrate touches it. */
 async function preserveBeforeV2(raw) {
   if (!raw || typeof raw !== 'object' || number(raw.version, 1) >= 2) return;
@@ -252,6 +303,12 @@ async function preserveBeforeV2(raw) {
 export function mergeBackup(state, raw) {
   const incoming = normalize(raw);
   let added = 0;
+  for (const key of ['bodyWeightKg', 'heightCm']) {
+    if (state.settings[key] == null && incoming.settings[key] != null) {
+      state.settings[key] = incoming.settings[key];
+      added += 1;
+    }
+  }
   const merge = (key, idOf) => {
     const known = new Set(state[key].map(idOf));
     for (const item of incoming[key]) {

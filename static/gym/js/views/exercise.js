@@ -28,7 +28,8 @@ export function adviceBox(hint, exercise, unit, { prefix = '', showLast = true }
       h('span', { class: 'advice-title' }, `${call.icon} ${prefix}${call.title}`),
       h('span', { class: 'advice-text' }, ` · ${call.text}`)),
     h('div', { class: 'advice-why' }, fmt.adviceReason(hint, exercise)),
-    showLast && h('div', { class: 'advice-last' }, fmt.lastTime(hint, unit, exercise.isTimed)));
+    showLast && h('div', { class: 'advice-last' }, fmt.lastTime(hint, unit, exercise.isTimed)),
+    exercise.equipment === 'barbell' && h('div', { class: 'advice-last' }, 'Plate weight only; bar excluded.'));
 }
 
 export function newExerciseNote(exercise) {
@@ -41,6 +42,7 @@ export function newExerciseNote(exercise) {
 export function exerciseLogger(ctx, session, entry, { exercise, history, onRemove }) {
   const unit = entry.unit ?? exercise?.defaultUnit ?? ctx.state.settings.unit;
   const timed = exercise?.isTimed ?? false;
+  const platesOnly = exercise?.equipment === 'barbell';
   const date = new Date(session.date);
   const before = previousHint(ctx, exercise, history, date, unit);
   const after = nextHint(ctx, exercise, entry, date, unit);
@@ -50,6 +52,7 @@ export function exerciseLogger(ctx, session, entry, { exercise, history, onRemov
   return h('section', { class: 'card exercise' },
     h('div', { class: 'exercise-head' },
       h('h3', { class: 'grow' }, entry.name),
+      platesOnly && h('span', { class: 'pill' }, 'plates only'),
       entry.targetSets > 0 && h('span', { class: `pill${done >= entry.targetSets ? ' done' : ''}` }, `${done}/${entry.targetSets} sets`),
       h('button', { class: 'icon-btn', 'aria-label': `Remove ${entry.name}`, onClick: onRemove }, icon('trash', 18))),
     before ? adviceBox(before, exercise, unit, { prefix: 'Today: ' }) : exercise && newExerciseNote(exercise),
@@ -61,7 +64,7 @@ export function exerciseLogger(ctx, session, entry, { exercise, history, onRemov
       }),
       h('span', {}), h('span', { 'aria-hidden': 'true' }, timed ? 'Sec' : 'Reps'),
       h('span', { 'aria-hidden': 'true' }, 'Last rep'), h('span', { 'aria-hidden': 'true' }, 'Done')),
-    entry.sets.map((set) => setRow(ctx, entry, set, set.warmup ? 'W' : String(++number), unit)),
+    entry.sets.map((set) => setRow(ctx, entry, set, set.warmup ? 'W' : String(++number), unit, platesOnly)),
     h('button', {
       class: 'row row-button accent add-set',
       onClick: () => ctx.update(() => addSet(entry, before, exercise, { done: !live })),
@@ -69,7 +72,7 @@ export function exerciseLogger(ctx, session, entry, { exercise, history, onRemov
     after && adviceBox(after, exercise, unit, { prefix: 'Next time: ', showLast: false }));
 }
 
-function setRow(ctx, entry, set, label, unit) {
+function setRow(ctx, entry, set, label, unit, platesOnly) {
   const done = set.done !== false;
   const failed = set.rir === 0;
   return h('div', { class: `set-row${done ? ' is-done' : ''}` },
@@ -84,7 +87,11 @@ function setRow(ctx, entry, set, label, unit) {
         else if (choice === 'delete') ctx.update(() => removeById(entry.sets, set.id));
       },
     }),
-    numberInput({ value: fmt.inputWeight(set.weightKg, unit), decimal: true, label: `Weight in ${unit}`, onInput: (v) => ctx.mutate(() => { set.weightKg = fmt.toKg(v, unit); }) }),
+    numberInput({
+      value: fmt.inputWeight(set.weightKg, unit), decimal: true,
+      label: platesOnly ? `Total plate weight in ${unit}, excluding the bar` : `Weight in ${unit}`,
+      onInput: (v) => ctx.mutate(() => { set.weightKg = fmt.toKg(v, unit); }),
+    }),
     h('span', { class: 'times muted', 'aria-hidden': 'true' }, '×'),
     numberInput({ value: set.reps, label: 'Reps', onInput: (v) => ctx.mutate(() => { set.reps = Math.round(v); }) }),
     h('button', {
