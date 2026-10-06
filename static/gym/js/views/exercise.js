@@ -6,7 +6,7 @@ import { hintFromSets, progressionHint } from '../engine/progression.js';
 import { loadIncrementKg } from '../engine/settings.js';
 import { isWorking } from '../engine/sets.js';
 import * as fmt from '../format.js';
-import { addSet, removeById, toggleDone } from '../model.js';
+import { addSet, removeById, toggleDone, toggleFailure } from '../model.js';
 
 /** What to lift, from the sessions before `before`. */
 export function previousHint(ctx, exercise, history, before, unit = ctx.state.settings.unit) {
@@ -60,7 +60,7 @@ export function exerciseLogger(ctx, session, entry, { exercise, history, onRemov
         onChange: (value) => ctx.update(() => { entry.unit = value; }),
       }),
       h('span', {}), h('span', { 'aria-hidden': 'true' }, timed ? 'Sec' : 'Reps'),
-      h('span', { 'aria-hidden': 'true' }, 'Fail'), h('span', { 'aria-hidden': 'true' }, 'Done')),
+      h('span', { 'aria-hidden': 'true' }, 'Failure'), h('span', { 'aria-hidden': 'true' }, 'Done')),
     entry.sets.map((set) => setRow(ctx, entry, set, set.warmup ? 'W' : String(++number), unit)),
     h('button', {
       class: 'row row-button accent add-set',
@@ -88,9 +88,9 @@ function setRow(ctx, entry, set, label, unit) {
     h('span', { class: 'times muted', 'aria-hidden': 'true' }, '×'),
     numberInput({ value: set.reps, label: 'Reps', onInput: (v) => ctx.mutate(() => { set.reps = Math.round(v); }) }),
     h('button', {
-      class: `fail${failed ? ' on' : ''}`, 'aria-pressed': String(failed), 'aria-label': 'Went to failure on this set',
-      onClick: () => ctx.update(() => { set.rir = failed ? null : 0; }),
-    }, 'Fail'),
+      class: `fail${failed ? ' on' : ''}`, 'aria-pressed': String(failed), 'aria-label': 'Set was taken to muscular failure with no reps left',
+      onClick: () => ctx.update(() => toggleFailure(entry, set)),
+    }, 'Failure'),
     h('button', {
       class: `check${done ? ' on' : ''}`, 'aria-pressed': String(done), 'aria-label': done ? 'Done. Tap to undo' : 'Mark set as done',
       onClick: () => ctx.update(() => toggleDone(entry, set)),

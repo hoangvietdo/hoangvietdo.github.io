@@ -132,7 +132,7 @@ function liveWorkout(ctx, session) {
       h('div', { class: 'live-actions' },
         h('button', { class: 'btn primary', onClick: () => finish(ctx, session) }, 'Finish workout'),
         h('button', { class: 'btn tinted', onClick: () => ctx.go(`#/workout/${session.id}`) }, 'Notes & details'))),
-    h('p', { class: 'section-footer tip' }, 'Change the weight or reps if they differ, tap Fail if you couldn’t do another rep, then tick the set. Tap a set number to mark a warm-up or delete it.'),
+    h('p', { class: 'section-footer tip' }, 'Change the weight or reps if they differ. Tap Failure if you could not do another rep—it also ticks the set complete. Otherwise tap ✓. Tap a set number to mark a warm-up or delete it.'),
     session.entries.map((entry) => exerciseLogger(ctx, session, entry, {
       exercise: catalog.get(entry.exerciseId),
       history,

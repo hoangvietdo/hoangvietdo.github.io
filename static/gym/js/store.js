@@ -262,9 +262,35 @@ export function mergeBackup(state, raw) {
     }
   };
   merge('customExercises', (x) => x.id);
-  merge('sessions', (x) => x.id);
   merge('cardio', (x) => x.id);
   merge('checkIns', (x) => x.day);
+  const sessions = new Map(state.sessions.map((session) => [session.id, session]));
+  for (const incomingSession of incoming.sessions) {
+    const existing = sessions.get(incomingSession.id);
+    if (!existing) {
+      state.sessions.push(incomingSession);
+      sessions.set(incomingSession.id, incomingSession);
+      added += 1;
+      continue;
+    }
+    const entries = new Map(existing.entries.map((entry) => [entry.id, entry]));
+    for (const incomingEntry of incomingSession.entries) {
+      const entry = entries.get(incomingEntry.id);
+      if (!entry) {
+        existing.entries.push(incomingEntry);
+        entries.set(incomingEntry.id, incomingEntry);
+        added += 1;
+        continue;
+      }
+      const knownSets = new Set(entry.sets.map((set) => set.id));
+      for (const set of incomingEntry.sets) {
+        if (knownSets.has(set.id)) continue;
+        entry.sets.push(set);
+        knownSets.add(set.id);
+        added += 1;
+      }
+    }
+  }
   state.sessions.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
   return added;
 }

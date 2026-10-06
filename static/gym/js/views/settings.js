@@ -35,6 +35,7 @@ export function renderSettings(ctx) {
     section('Your data', card(
       actionRow('Export backup', () => exportBackup(ctx)),
       actionRow('Export pre-update safety copy', () => exportSafetyBackup()),
+      actionRow('Restore missing data from safety copy', () => restoreSafetyBackup(ctx)),
       importRow(ctx),
       actionRow('Load sample data', () => loadSampleData(ctx)),
       actionRow('Erase all data', () => eraseAll(ctx), 'danger')),
@@ -88,6 +89,18 @@ async function exportSafetyBackup() {
     return;
   }
   await shareOrDownload(json, `gymtrack-before-v1.1-${dayKey(new Date())}.json`, 'GymTrack pre-update safety copy');
+}
+
+async function restoreSafetyBackup(ctx) {
+  const json = await safetyBackupJSON();
+  if (!json) {
+    alert('No pre-update safety copy is available on this device. You can still import the backup file you saved earlier.');
+    return;
+  }
+  if (!confirm('Restore workouts, exercises or sets that are missing from the pre-update safety copy? Existing data will not be overwritten.')) return;
+  let added = 0;
+  ctx.update((state) => { added = mergeBackup(state, JSON.parse(json)); });
+  alert(added ? `Restored ${added} missing ${added === 1 ? 'item' : 'items'}.` : 'Nothing is missing from the current data.');
 }
 
 async function shareOrDownload(json, name, title) {

@@ -95,6 +95,14 @@ export function toggleDone(entry, set) {
   }
 }
 
+/** Marks a set as taken to muscular failure. Recording failure also means the set was
+ * performed, so tick it complete and carry its weight into later planned sets. */
+export function toggleFailure(entry, set) {
+  const wasFailure = set.rir === 0;
+  set.rir = wasFailure ? null : 0;
+  if (!wasFailure && set.done === false) toggleDone(entry, set);
+}
+
 /** Drops sets that were never done. Returns false (and deletes the workout) if nothing was. */
 export function finishSession(state, session) {
   for (const entry of session.entries) entry.sets = entry.sets.filter((s) => s.done !== false);
