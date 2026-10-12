@@ -5,7 +5,7 @@
 import { MUSCLES, MUSCLE_INFO } from './muscles.js';
 import { contributions } from './exercises.js';
 import { cardioKind, cardioLoad } from './cardio.js';
-import { HOUR, DAY } from './calendar.js';
+import { HOUR, DAY, addDays, weekStart } from './calendar.js';
 import { target, maxHeartRate } from './settings.js';
 import { isWorking } from './sets.js';
 
@@ -13,7 +13,6 @@ export const READY = 0.9;
 export const FATIGUED = 0.7;
 export const FULL_FATIGUE_SETS = 10;
 const LOOKBACK = 10 * DAY;
-const WEEK = 7 * DAY;
 
 /** Sets far from failure stimulate (and fatigue) much less than hard sets. */
 export function effortFactor(rir) {
@@ -50,6 +49,8 @@ export function trainability(recovery) {
 
 export function muscleStatuses({ now, workouts, cardio = [], settings, catalog }) {
   const t = +now;
+  const currentWeekStart = +weekStart(now, settings.weekStartsMonday);
+  const nextWeekStart = +addDays(new Date(currentWeekStart), 7);
   const fatigue = {};
   const weekly = {};
   const lastTrained = {};
@@ -68,7 +69,7 @@ export function muscleStatuses({ now, workouts, cardio = [], settings, catalog }
     const age = t - date;
     if (age < LOOKBACK) addFatigue(load, date);
     for (const [muscle, sets] of Object.entries(load)) {
-      if (age < WEEK) weekly[muscle] = (weekly[muscle] ?? 0) + sets;
+      if (date >= currentWeekStart && date < nextWeekStart) weekly[muscle] = (weekly[muscle] ?? 0) + sets;
       if (sets >= 1 && !(lastTrained[muscle] >= date)) lastTrained[muscle] = date;
     }
   }

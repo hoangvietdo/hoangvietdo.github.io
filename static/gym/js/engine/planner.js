@@ -2,7 +2,7 @@
 // weekly targets, then fills a set budget with exercises, most urgent muscle first.
 
 import { contributions, isCompound } from './exercises.js';
-import { DAY } from './calendar.js';
+import { DAY, addDays, weekStart } from './calendar.js';
 import { loadIncrementKg } from './settings.js';
 import { isWorking } from './sets.js';
 import { progressionHint } from './progression.js';
@@ -113,6 +113,8 @@ function buildExercises(template, byMuscle, workouts, catalog, settings, now, li
   const budget = light ? LIGHT_SESSION_BUDGET : SESSION_BUDGET;
   const perExercise = light ? 3 : 4;
   const usage = usageCounts(workouts, +now - 56 * DAY);
+  const currentWeekStart = weekStart(now, settings.weekStartsMonday);
+  const previousWeekUsage = usageCounts(workouts, +addDays(currentWeekStart, -7), +currentWeekStart);
   const chosen = [];
   const focus = [];
   const exhausted = new Set();
@@ -130,7 +132,7 @@ function buildExercises(template, byMuscle, workouts, catalog, settings, now, li
     }
 
     const sets = Math.min(perExercise, budget - total, Math.round(pick.remaining));
-    const exercise = sets >= 2 ? bestExercise(pick.muscle, chosen, byMuscle, catalog, usage) : null;
+    const exercise = sets >= 2 ? bestExercise(pick.muscle, chosen, byMuscle, catalog, usage, previousWeekUsage) : null;
     if (!exercise) {
       exhausted.add(pick.muscle);
       continue;
@@ -155,12 +157,16 @@ function buildExercises(template, byMuscle, workouts, catalog, settings, now, li
   return { exercises, focus };
 }
 
-function bestExercise(muscle, chosen, byMuscle, catalog, usage) {
+function bestExercise(muscle, chosen, byMuscle, catalog, usage, previousWeekUsage) {
   const candidates = catalog.targeting(muscle)
     .filter((e) => !chosen.some((c) => c.exercise.id === e.id) && isCompatible(e, byMuscle));
-  // Exercises led by this muscle first (curls before chin-ups for biceps), then the ones the
-  // user already does, then library order.
+  // Prefer exercises performed in the previous calendar week so today's plan can carry their
+  // exact reps and load forward. Then prefer exercises led by this muscle, longer-term habits,
+  // and finally library order.
   candidates.sort((l, r) => {
+    const leftPreviousWeek = previousWeekUsage.get(l.id) ?? 0;
+    const rightPreviousWeek = previousWeekUsage.get(r.id) ?? 0;
+    if (leftPreviousWeek !== rightPreviousWeek) return rightPreviousWeek - leftPreviousWeek;
     const leftLeads = l.primary[0] === muscle;
     const rightLeads = r.primary[0] === muscle;
     if (leftLeads !== rightLeads) return leftLeads ? -1 : 1;
@@ -177,10 +183,10 @@ function isCompatible(exercise, byMuscle) {
     && exercise.secondary.every((m) => (byMuscle[m]?.trainability ?? 1) >= 0.2);
 }
 
-function usageCounts(workouts, since) {
+function usageCounts(workouts, since, before = Infinity) {
   const counts = new Map();
   for (const workout of workouts) {
-    if (+workout.date < since) continue;
+    if (+workout.date < since || +workout.date >= before) continue;
     for (const exercise of workout.exercises) {
       if (exercise.sets.some(isWorking)) counts.set(exercise.exerciseId, (counts.get(exercise.exerciseId) ?? 0) + 1);
     }
