@@ -6,7 +6,7 @@ import { hintFromSets, progressionHint } from '../engine/progression.js';
 import { loadIncrementKg } from '../engine/settings.js';
 import { isWorking } from '../engine/sets.js';
 import * as fmt from '../format.js';
-import { addSet, removeById, toggleDone, toggleFailure } from '../model.js';
+import { addSet, removeById, setBodyweightAddedWeight, toggleDone, toggleFailure } from '../model.js';
 
 /** What to lift, from the sessions before `before`. */
 export function previousHint(ctx, exercise, history, before, unit = ctx.state.settings.unit) {
@@ -65,14 +65,8 @@ export function exerciseLogger(ctx, session, entry, { exercise, history, onRemov
       entry.targetSets > 0 && h('span', { class: `pill${done >= entry.targetSets ? ' done' : ''}` }, `${done}/${entry.targetSets} sets`),
       h('button', { class: 'icon-btn', 'aria-label': `Remove ${entry.name}`, onClick: onRemove }, icon('trash', 18))),
     before ? adviceBox(before, exercise, unit, { prefix: 'Today: ' }) : exercise && newExerciseNote(exercise),
-    bodyweightChoice && h('label', { class: 'row field load-mode' },
-      h('span', { class: 'label grow' }, 'Load'),
-      select({
-        value: loadMode,
-        options: [['bodyweight', 'Bodyweight only'], ['added', 'Bodyweight + added weight']],
-        label: `Load type for ${entry.name}`,
-        onChange: (value) => ctx.update(() => { entry.loadMode = value; }),
-      })),
+    bodyweightChoice && h('div', { class: 'bodyweight-help' },
+      'Your body weight is included. Leave extra weight empty for bodyweight only.'),
     entry.sets.length > 0 && h('div', { class: 'set-row set-head' },
       h('span', { 'aria-hidden': 'true' }, 'Set'),
       select({
@@ -81,7 +75,7 @@ export function exerciseLogger(ctx, session, entry, { exercise, history, onRemov
       }),
       h('span', {}), h('span', { 'aria-hidden': 'true' }, timed ? 'Sec' : 'Reps'),
       h('span', { 'aria-hidden': 'true' }, 'Last rep'), h('span', { 'aria-hidden': 'true' }, 'Done')),
-    entry.sets.map((set) => setRow(ctx, entry, set, set.warmup ? 'W' : String(++number), unit, platesOnly, loadMode)),
+    entry.sets.map((set) => setRow(ctx, entry, set, set.warmup ? 'W' : String(++number), unit, platesOnly, loadMode, bodyweightChoice)),
     h('button', {
       class: 'row row-button accent add-set',
       onClick: () => ctx.update(() => addSet(entry, before, exercise, { done: !live })),
@@ -100,10 +94,10 @@ function entryLoadMode(entry, exercise) {
   return entry.sets.some((set) => set.weightKg > 0) ? 'added' : 'bodyweight';
 }
 
-function setRow(ctx, entry, set, label, unit, platesOnly, loadMode) {
+function setRow(ctx, entry, set, label, unit, platesOnly, loadMode, bodyweightChoice) {
   const done = set.done !== false;
   const failed = set.rir === 0;
-  return h('div', { class: `set-row${done ? ' is-done' : ''}` },
+  return h('div', { class: `set-row${bodyweightChoice ? ' bodyweight-row' : ''}${done ? ' is-done' : ''}` },
     // The set number doubles as a menu: warm-up or delete.
     select({
       className: `set-num${set.warmup ? ' warm' : ''}`,
@@ -115,8 +109,14 @@ function setRow(ctx, entry, set, label, unit, platesOnly, loadMode) {
         else if (choice === 'delete') ctx.update(() => removeById(entry.sets, set.id));
       },
     }),
-    loadMode === 'bodyweight'
-      ? h('span', { class: 'set-load-label', 'aria-label': 'Bodyweight' }, 'BW')
+    bodyweightChoice
+      ? h('div', { class: 'bodyweight-load' },
+        h('span', { class: 'bodyweight-prefix', 'aria-hidden': 'true' }, 'BW +'),
+        numberInput({
+          value: fmt.inputWeight(set.weightKg, unit), decimal: true,
+          label: `Extra weight added to body weight in ${unit}; leave empty for bodyweight only`,
+          onInput: (v) => ctx.mutate(() => setBodyweightAddedWeight(entry, set, fmt.toKg(v, unit))),
+        }))
       : numberInput({
         value: fmt.inputWeight(set.weightKg, unit), decimal: true,
         label: platesOnly

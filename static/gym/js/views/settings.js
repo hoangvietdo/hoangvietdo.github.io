@@ -6,7 +6,7 @@ import { backupJSON, finishBackupJSON, safetyBackupJSON, mergeBackup, sampleData
 import { isInstalled } from './today.js';
 import * as fmt from '../format.js';
 
-export const VERSION = '1.8';
+export const VERSION = '1.9';
 
 export function renderSettings(ctx) {
   const s = ctx.state.settings;

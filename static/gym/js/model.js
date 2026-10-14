@@ -89,6 +89,13 @@ export function addSet(entry, hint, exercise, { done = true } = {}) {
   });
 }
 
+/** Bodyweight sets always include the athlete's body weight. A positive value is the
+ * external weight added with a belt, vest, plate, etc.; zero means bodyweight only. */
+export function setBodyweightAddedWeight(entry, set, weightKg) {
+  set.weightKg = Math.max(0, weightKg);
+  entry.loadMode = entry.sets.some((item) => item.weightKg > 0) ? 'added' : 'bodyweight';
+}
+
 /** Ticks a set off (or back on). A ticked weight carries over to the sets still to do. */
 export function toggleDone(entry, set) {
   const alreadyDoneWithoutFailure = set.done !== false && set.rir !== 0;
