@@ -86,6 +86,7 @@ export const LIBRARY = [
   ex('front_squat', 'Front Squat', ['quads'], ['glutes'], 'barbell', [5, 8]),
   ex('leg_extension', 'Leg Extension', ['quads'], [], 'machine', [10, 15]),
   ex('romanian_deadlift', 'Romanian Deadlift', ['hamstrings'], ['glutes', 'lowerBack'], 'barbell', [6, 10]),
+  ex('dumbbell_romanian_deadlift', 'Dumbbell Romanian Deadlift', ['hamstrings'], ['glutes', 'lowerBack'], 'dumbbell', [8, 12]),
   ex('smith_romanian_deadlift', 'Smith Machine Romanian Deadlift', ['hamstrings'], ['glutes', 'lowerBack'], 'smith', [8, 12]),
   ex('seated_leg_curl', 'Seated Leg Curl', ['hamstrings'], [], 'machine', [10, 15]),
   ex('lying_leg_curl', 'Lying Leg Curl', ['hamstrings'], [], 'machine', [10, 15]),
